@@ -1,0 +1,14 @@
+@import "tailwindcss";
+
+@theme {
+  --color-cream: #f5efe6;
+  --color-burgundy: #6b1e2e;
+  --color-gold: #b8924a;
+  --color-ink: #2a2023;
+  --font-serif: "Playfair Display", serif;
+  --font-sans: "Inter", sans-serif;
+}
+
+body {
+  @apply bg-cream text-ink font-sans;
+}
