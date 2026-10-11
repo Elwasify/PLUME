@@ -1,14 +1,27 @@
 @import "tailwindcss";
 
 @theme {
-  --color-cream: #f5efe6;
-  --color-burgundy: #6b1e2e;
-  --color-gold: #b8924a;
-  --color-ink: #2a2023;
-  --font-serif: "Playfair Display", serif;
-  --font-sans: "Inter", sans-serif;
+  --radius: 0.125rem;
+
+
+  --color-cream: oklch(97.3% 0.009 85);
+  --color-burgundy: oklch(38% 0.1 10);
+  --color-gold: oklch(73% 0.08 78);
+  --color-gold-deep: oklch(46% 0.09 70);
+  --color-ink: oklch(24% 0.005 60);
+  --color-taupe: oklch(68% 0.025 70);
+  --color-secondary: oklch(94% 0.014 80);
+  --color-muted: oklch(45% 0.02 65);
+  --color-line: oklch(88% 0.02 75);
+
+  --font-serif: "Playfair Display", Georgia, serif;
+  --font-sans: "Inter", system-ui, sans-serif;
 }
 
 body {
   @apply bg-cream text-ink font-sans;
+}
+
+h1, h2, h3, h4 {
+  @apply font-serif;
 }
