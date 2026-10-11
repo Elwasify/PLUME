@@ -2,14 +2,15 @@ import { useState } from "react";
 import { Icon } from "@iconify/react";
 
 export default function BookCover({ src, alt, title, className = "" }) {
-  const [failed, setFailed] = useState(false);
+  const [failedSrc, setFailedSrc] = useState("");
+  const failed = src === failedSrc;
 
   if (src && !failed) {
     return (
       <img
         src={src}
         alt={alt}
-        onError={() => setFailed(true)}
+        onError={() => setFailedSrc(src)}
         className={className}
       />
     );

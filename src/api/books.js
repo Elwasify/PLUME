@@ -66,24 +66,40 @@ async function getJson(url, signal) {
 }
 
 function toBook(doc) {
-  if (!doc.key?.startsWith("/works/")) return null;
+  if (!doc || typeof doc !== "object") return null;
+  const key = typeof doc.key === "string" ? doc.key : "";
+  const workId = key.match(/^(?:\/works\/)?(OL\d+W)$/i)?.[1];
+  if (!workId) return null;
+  const isbns = Array.isArray(doc.isbn) ? doc.isbn : [];
+  const cover =
+    coverUrl(doc.cover_i) || isbnCoverUrl(isbns[0]);
 
   return {
-    id: doc.key.slice("/works/".length),
+    id: workId.toUpperCase(),
     volumeInfo: {
-      title: doc.title || "Untitled",
-      authors: Array.isArray(doc.author_name) ? doc.author_name : [],
+      title:
+        typeof doc.title === "string" && doc.title.trim()
+          ? doc.title
+          : "Untitled",
+      authors: Array.isArray(doc.author_name)
+        ? doc.author_name.filter(
+            (author) => typeof author === "string" && author.trim(),
+          )
+        : [],
       publishedDate: doc.first_publish_year
         ? String(doc.first_publish_year)
         : undefined,
-      imageLinks: doc.cover_i || doc.isbn?.[0]
-        ? {
-            thumbnail:
-              coverUrl(doc.cover_i) || isbnCoverUrl(doc.isbn?.[0]),
-          }
-        : undefined,
+      imageLinks: cover ? { thumbnail: cover } : undefined,
     },
   };
+}
+
+export function authorQuery(name) {
+  const escaped = String(name || "")
+    .trim()
+    .replaceAll("\\", "\\\\")
+    .replaceAll('"', '\\"');
+  return `author:"${escaped}"`;
 }
 
 export async function searchBooks(
@@ -119,7 +135,7 @@ export async function searchBooks(
 }
 
 async function getWork(id, signal) {
-  let workId = id;
+  let workId = String(id || "").trim().toUpperCase();
 
   for (let redirects = 0; redirects < 3; redirects += 1) {
     if (!/^OL\d+W$/.test(workId)) {
@@ -182,7 +198,7 @@ async function getEditions(workId, signal) {
 
 export async function getBook(id, signal) {
   const work = await getWork(id, signal);
-  const workId = work.key?.split("/").pop() || id;
+  const workId = work.key?.split("/").pop() || String(id).toUpperCase();
   const [authors, editions] = await Promise.all([
     getAuthors(work, signal),
     getEditions(workId, signal),
@@ -203,7 +219,7 @@ export async function getBook(id, signal) {
   const cover = coverUrl(coverId, "L") || isbnCoverUrl(edition?.isbn_13?.[0] || edition?.isbn_10?.[0], "L");
 
   return {
-    id,
+    id: workId,
     volumeInfo: {
       title: work.title || "Untitled",
       subtitle: work.subtitle,

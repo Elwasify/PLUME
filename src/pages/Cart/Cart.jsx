@@ -1,18 +1,16 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Icon } from "@iconify/react";
 import { formatPrice } from "../../context/shopUtils";
 import { useShop } from "../../context/useShop";
 import BookCover from "../../components/BookCover/BookCover";
+import usePageTitle from "../../hooks/usePageTitle";
 
 export default function Cart() {
   const { cart, cartCount, cartTotal, setQty, removeFromCart, clearCart } =
     useShop();
   const [demoDone, setDemoDone] = useState(false);
-
-  useEffect(() => {
-    document.title = "Your bag — PLUME";
-  }, []);
+  usePageTitle("Your bag");
 
   const hasDemoPrices = cart.some((i) => i.demo);
 

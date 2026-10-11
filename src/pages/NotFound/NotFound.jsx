@@ -1,11 +1,9 @@
-import { useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Icon } from "@iconify/react";
+import usePageTitle from "../../hooks/usePageTitle";
 
 export default function NotFound() {
-  useEffect(() => {
-    document.title = "Page not found — PLUME";
-  }, []);
+  usePageTitle("Page not found");
 
   return (
     <section className="mx-auto max-w-3xl px-6 py-24 text-center md:py-32">

@@ -5,6 +5,7 @@ import BookCard from "../../components/BookCard/BookCard";
 import Newsletter from "../../components/Newsletter/Newsletter";
 import categories from "../../data/categories";
 import Hero from "../../components/Hero/Hero";
+import usePageTitle from "../../hooks/usePageTitle";
 
 const topics = [
   { label: "Stoicism", q: "stoicism" },
@@ -31,6 +32,8 @@ const pillars = [
 ];
 
 export default function Home() {
+  usePageTitle("");
+
   const { books, loading, error } = useBooks({ category: "Fiction" });
 
   return (

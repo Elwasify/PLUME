@@ -3,10 +3,11 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 import { Icon } from "@iconify/react";
 import BookCard from "../../components/BookCard/BookCard";
 import useBook from "../../hooks/useBook";
-import { searchBooks } from "../../api/books";
+import { authorQuery, searchBooks } from "../../api/books";
 import { useShop } from "../../context/useShop";
 import { formatPrice, toItem } from "../../context/shopUtils";
 import BookCover from "../../components/BookCover/BookCover";
+import usePageTitle from "../../hooks/usePageTitle";
 
 function cleanDescription(text) {
   if (!text) return "";
@@ -23,7 +24,7 @@ function relatedOptions(book) {
   if (!info) return null;
   const author = info.authors?.[0];
   if (author) {
-    return { q: `author:"${author.replaceAll('"', "")}"`, limit: 10 };
+    return { q: authorQuery(author), limit: 10 };
   }
   const subject = info.categories?.[0];
   if (subject) return { category: subject, limit: 10 };
@@ -36,16 +37,11 @@ export default function BookDetails() {
   const { book, loading, error, retry } = useBook(id);
   const { addToCart, toggleWishlist, inWishlist, cartQty } = useShop();
   const [rel, setRel] = useState({ id: "", list: [] });
+  usePageTitle(book?.volumeInfo?.title || "Book details");
 
   useEffect(() => {
     window.scrollTo(0, 0);
   }, [id]);
-
-  useEffect(() => {
-    if (book?.volumeInfo?.title) {
-      document.title = `${book.volumeInfo.title} — PLUME`;
-    }
-  }, [book]);
 
   useEffect(() => {
     const options = relatedOptions(book);

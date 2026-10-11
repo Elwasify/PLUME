@@ -1,16 +1,13 @@
-import { useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Icon } from "@iconify/react";
 import { formatPrice } from "../../context/shopUtils";
 import { useShop } from "../../context/useShop";
 import BookCover from "../../components/BookCover/BookCover";
+import usePageTitle from "../../hooks/usePageTitle";
 
 export default function Wishlist() {
   const { wishlist, toggleWishlist, addToCart, cartQty } = useShop();
-
-  useEffect(() => {
-    document.title = "Wishlist — PLUME";
-  }, []);
+  usePageTitle("Wishlist");
 
   return (
     <section className="mx-auto max-w-6xl px-6 py-12 md:py-20">

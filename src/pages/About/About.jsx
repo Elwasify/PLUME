@@ -72,6 +72,14 @@ export default function About() {
             </div>
             <figcaption className="mt-4 text-center text-xs uppercase tracking-[0.3em] text-gold-deep">
               Franz Kafka · 1883 – 1924
+              <a
+                href="https://commons.wikimedia.org/wiki/File:Franz_Kafka,_1923.jpg"
+                target="_blank"
+                rel="noreferrer"
+                className="mt-2 block text-[10px] tracking-[0.2em] underline decoration-gold underline-offset-4"
+              >
+                Portrait via Wikimedia Commons · Public domain
+              </a>
             </figcaption>
           </figure>
 

@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import usePageTitle from "../../hooks/usePageTitle";
 
 const categories = [
   "Fiction",
@@ -12,6 +13,8 @@ const categories = [
 ];
 
 export default function Categories() {
+  usePageTitle("Categories");
+
   return (
     <section className="mx-auto max-w-6xl px-6 py-16">
       <p className="text-[11px] uppercase tracking-[0.3em] text-gold-deep">

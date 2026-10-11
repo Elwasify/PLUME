@@ -4,16 +4,10 @@ import { Icon } from "@iconify/react";
 import BookCard from "../../components/BookCard/BookCard";
 import categories from "../../data/categories";
 import { searchBooks } from "../../api/books";
+import usePageTitle from "../../hooks/usePageTitle";
 
 const LIMIT = 20;
 const RECENT_KEY = "plume:recent-searches";
-
-const LANGS = [
-  { value: "", label: "All languages" },
-  { value: "en", label: "English" },
-  { value: "fr", label: "Français" },
-  { value: "ar", label: "العربية" },
-];
 
 const SORTS = [
   { value: "", label: "Relevance" },
@@ -60,7 +54,6 @@ export default function Discover() {
   const [searchParams, setSearchParams] = useSearchParams();
   const q = searchParams.get("q") || "";
   const category = searchParams.get("category") || "";
-  const lang = searchParams.get("lang") || "";
   const sort = searchParams.get("sort") || "";
 
   const [draft, setDraft] = useState(null);
@@ -75,7 +68,7 @@ export default function Discover() {
   });
   const [more, setMore] = useState({ loading: false, error: false });
 
-  const fullKey = JSON.stringify([q, category, lang, sort, retry]);
+  const fullKey = JSON.stringify([q, category, sort, retry]);
   const value = draft ?? q;
 
   const update = useCallback(
@@ -104,9 +97,7 @@ export default function Discover() {
     [setRecent],
   );
 
-  useEffect(() => {
-    document.title = q ? `${q} — Discover — PLUME` : "Discover — PLUME";
-  }, [q]);
+  usePageTitle(q ? `${q} — Discover` : "Discover");
 
   useEffect(() => {
     if (draft === null) return;
@@ -125,7 +116,6 @@ export default function Discover() {
       {
         q,
         category,
-        lang,
         orderBy: sort || "relevance",
         offset: 0,
         limit: LIMIT,
@@ -148,11 +138,11 @@ export default function Discover() {
       });
 
     return () => ctrl.abort();
-  }, [q, category, lang, sort, fullKey]);
+  }, [q, category, sort, fullKey]);
 
   const loading = data.key !== fullKey;
   const books = loading ? [] : data.books;
-  const hasFilters = Boolean(q || category || lang || sort);
+  const hasFilters = Boolean(q || category || sort);
 
   async function loadMore() {
     if (more.loading) return;
@@ -163,7 +153,6 @@ export default function Discover() {
       const list = await searchBooks({
         q,
         category,
-        lang,
         orderBy: sort || "relevance",
         offset: data.page * LIMIT,
         limit: LIMIT,
@@ -300,22 +289,6 @@ export default function Discover() {
         </div>
 
         <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
-          <div
-            className="flex flex-wrap items-center gap-2"
-            role="group"
-            aria-label="Language"
-          >
-            {LANGS.map((l) => (
-              <Chip
-                key={l.value || "all"}
-                active={lang === l.value}
-                onClick={() => update({ lang: l.value })}
-              >
-                {l.label}
-              </Chip>
-            ))}
-          </div>
-
           <div
             className="flex flex-wrap items-center gap-2"
             role="group"

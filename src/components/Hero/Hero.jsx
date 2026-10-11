@@ -14,8 +14,6 @@ const slides = [
     author: "Jane Austen",
     year: "1813",
     bio: "1775 — 1817 · Hampshire",
-    price: "$13.50",
-    quote: "I declare after all there is no enjoyment like reading!",
     q: "pride and prejudice",
   },
   {
@@ -24,8 +22,6 @@ const slides = [
     author: "Albert Camus",
     year: "1942",
     bio: "1913 — 1960 · Mondovi",
-    price: "$11.00",
-    quote: "Mother died today.",
     q: "the stranger",
   },
   {
@@ -34,8 +30,6 @@ const slides = [
     author: "Fyodor Dostoevsky",
     year: "1848",
     bio: "1821 — 1881 · Moscow",
-    price: "$9.90",
-    quote: "A whole minute of happiness! Is that too little for a man’s life?",
     q: "white nights",
   },
   {
@@ -44,8 +38,6 @@ const slides = [
     author: "Franz Kafka",
     year: "1915",
     bio: "1883 — 1924 · Prague",
-    price: "$8.75",
-    quote: "He found himself transformed in his bed into a horrible vermin.",
     q: "metamorphosis",
   },
   {
@@ -54,8 +46,6 @@ const slides = [
     author: "Victor Hugo",
     year: "1862",
     bio: "1802 — 1885 · Besançon",
-    price: "$15.20",
-    quote: "Hope is the word which God has written on the brow of every man.",
     q: "les miserables",
   },
 ];
@@ -74,7 +64,7 @@ export default function Hero() {
       <div className="flex flex-col justify-center px-6 py-12 md:px-12 lg:py-24">
         <p className="flex items-center gap-4 text-[11px] uppercase tracking-[0.3em] text-burgundy">
           <span className="h-px w-12 bg-gold" />
-          N° 27 — The Literary Review
+          A digital literary library
         </p>
 
         <h1 className="mt-8 text-5xl leading-[1.05] md:text-7xl">
@@ -105,33 +95,29 @@ export default function Hero() {
 
         <div className="mt-12 grid grid-cols-3 divide-x divide-line border-y border-line">
           <div className="px-2 py-6 text-center sm:px-6">
-            <p className="font-['Inter',sans-serif] text-3xl font-light tracking-tight text-ink md:text-5xl">
-              40<span className="text-burgundy">k+</span>
+            <p className="font-serif text-sm text-burgundy sm:text-lg md:text-xl">
+              Open Library
             </p>
             <p className="mt-3 text-[10px] uppercase tracking-[0.2em] text-muted">
-              Volumes
+              Book data
             </p>
           </div>
 
           <div className="px-2 py-6 text-center sm:px-6">
-            <p className="flex items-center justify-center gap-1.5 font-['Inter',sans-serif] text-3xl font-light tracking-tight text-ink md:text-5xl">
-              4.8
-              <Icon
-                icon="lucide:star"
-                className="h-4 w-4 fill-gold text-gold md:h-5 md:w-5"
-              />
+            <p className="font-serif text-sm text-burgundy sm:text-lg md:text-xl">
+              Saved locally
             </p>
             <p className="mt-3 text-[10px] uppercase tracking-[0.2em] text-muted">
-              Reader rating
+              Wishlist &amp; cart
             </p>
           </div>
 
           <div className="px-2 py-6 text-center sm:px-6">
-            <p className="font-serif text-base italic leading-snug text-burgundy sm:text-xl">
-              “Simply exquisite.”
+            <p className="font-serif text-sm text-burgundy sm:text-lg md:text-xl">
+              Demo only
             </p>
             <p className="mt-3 text-[10px] uppercase tracking-[0.2em] text-muted">
-              The Book World
+              No orders placed
             </p>
           </div>
         </div>
@@ -188,10 +174,6 @@ export default function Hero() {
             {current.author} · {current.year}
           </p>
           <p className="mt-3 text-sm text-cream/70">{current.bio}</p>
-          <p className="mt-5 font-['Inter',sans-serif] text-3xl font-light tracking-tight text-gold">
-            {current.price}
-          </p>
-
           <Link
             to={`/discover?q=${encodeURIComponent(current.q)}`}
             className="mt-6 text-xs uppercase tracking-[0.3em] text-gold"
@@ -214,10 +196,6 @@ export default function Hero() {
             ))}
           </div>
 
-          <p className="mx-auto mt-8 flex max-w-sm items-center justify-center gap-3 font-serif text-sm italic text-cream/80">
-            <Icon icon="lucide:quote" className="h-4 w-4 shrink-0 text-gold" />
-            {current.quote}
-          </p>
         </div>
       </div>
     </section>

@@ -2,7 +2,8 @@ import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { Icon } from "@iconify/react";
 import BookCard from "../../components/BookCard/BookCard";
-import { searchBooks } from "../../api/books";
+import { authorQuery, searchBooks } from "../../api/books";
+import usePageTitle from "../../hooks/usePageTitle";
 
 const WRITER_RE =
   /writer|author|novelist|poet|playwright|dramatist|essayist|philosopher|journalist|historian|critic|short story/i;
@@ -31,15 +32,22 @@ async function fetchBio(name, signal) {
 
 async function fetchWorks(name, signal) {
   const list = await searchBooks(
-    { q: `author:"${name.replaceAll('"', "")}"`, limit: 40 },
+    { q: authorQuery(name), limit: 40 },
     signal,
   );
-  const lower = name.toLowerCase();
+  const normalize = (value) =>
+    value
+      .normalize("NFKD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .toLowerCase()
+      .replace(/\s+/g, " ")
+      .trim();
+  const lower = normalize(name);
   const seen = new Set();
   return list.filter((b) => {
     const info = b.volumeInfo || {};
     const byAuthor = (info.authors || []).some(
-      (a) => a.toLowerCase() === lower,
+      (a) => typeof a === "string" && normalize(a) === lower,
     );
     const t = (info.title || "").toLowerCase().trim();
     if (!byAuthor || !t || seen.has(t)) return false;
@@ -50,6 +58,7 @@ async function fetchWorks(name, signal) {
 
 export default function Author() {
   const { name } = useParams();
+  usePageTitle(name || "Author");
   const [retry, setRetry] = useState(0);
   const key = `${name}::${retry}`;
 
@@ -57,7 +66,6 @@ export default function Author() {
   const [booksRes, setBooksRes] = useState({ key: "", list: [], error: false });
 
   useEffect(() => {
-    document.title = `${name} — PLUME`;
     window.scrollTo(0, 0);
     const ctrl = new AbortController();
 

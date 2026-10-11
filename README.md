@@ -1,16 +1,56 @@
-# React + Vite
+# PLUME
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+PLUME is a French-inspired literary library for discovering books and keeping a personal wishlist and shopping bag in the browser.
 
-Currently, two official plugins are available:
+## Features
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- Search and browse books by title, author, subject, and category.
+- Open book and author detail pages from search results.
+- Save books to a wishlist and shopping bag, with data stored in `localStorage`.
+- Adjust bag quantities and see demo prices in a checkout preview.
+- Use the site on desktop, tablet, or mobile screens.
 
-## React Compiler
+PLUME is a frontend portfolio project. Checkout and newsletter forms are demonstrations; they do not place orders, take payment, or send email.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## Technology
 
-## Expanding the ESLint configuration
+- React and Vite
+- React Router
+- Tailwind CSS v4
+- Iconify with Lucide icons
+- Native `fetch`, React Context, and `localStorage`
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+## Getting started
+
+Install Node.js, then open the project folder in a terminal and install its dependencies:
+
+```bash
+npm ci
+```
+
+Start the local development server:
+
+```bash
+npm run dev
+```
+
+Vite prints the local address in the terminal. Open that address in a browser.
+
+## Commands
+
+```bash
+npm run dev
+npm run build
+npm run preview
+npm run lint
+```
+
+## Book data and images
+
+Book search, metadata, and catalog covers come from [Open Library](https://openlibrary.org/). Results and cover availability depend on its catalog. The homepage selection also uses local cover artwork. Some books show clearly marked demo prices because this project has no sales backend.
+
+The Kafka portrait on the About page is [“Franz Kafka, 1923” on Wikimedia Commons](https://commons.wikimedia.org/wiki/File:Franz_Kafka,_1923.jpg), credited there to an unknown photographer and marked public domain.
+
+## Deployment
+
+The project includes a Vercel rewrite so direct visits and refreshes on React Router paths load the app. No production deployment URL is listed because deployment has not been verified.
