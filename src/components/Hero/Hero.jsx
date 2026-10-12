@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Icon } from "@iconify/react";
+import { formatPrice, toItem } from "../../context/shopUtils";
 import prideImg from "../../assets/authors/pride-prejudice.jpg";
 import strangerImg from "../../assets/authors/the-stranger.jpg";
 import nightsImg from "../../assets/authors/white-nights.jpg";
@@ -14,7 +15,8 @@ const slides = [
     author: "Jane Austen",
     year: "1813",
     bio: "1775 — 1817 · Hampshire",
-    q: "pride and prejudice",
+    quote: "I declare after all there is no enjoyment like reading!",
+    id: "OL66554W",
   },
   {
     image: strangerImg,
@@ -22,7 +24,8 @@ const slides = [
     author: "Albert Camus",
     year: "1942",
     bio: "1913 — 1960 · Mondovi",
-    q: "the stranger",
+    quote: "Mother died today.",
+    id: "OL1230613W",
   },
   {
     image: nightsImg,
@@ -30,7 +33,8 @@ const slides = [
     author: "Fyodor Dostoevsky",
     year: "1848",
     bio: "1821 — 1881 · Moscow",
-    q: "white nights",
+    quote: "A whole minute of happiness! Is that too little for a man’s life?",
+    id: "OL166952W",
   },
   {
     image: metaImg,
@@ -38,7 +42,8 @@ const slides = [
     author: "Franz Kafka",
     year: "1915",
     bio: "1883 — 1924 · Prague",
-    q: "metamorphosis",
+    quote: "He found himself transformed in his bed into a horrible vermin.",
+    id: "OL498556W",
   },
   {
     image: lesMisImg,
@@ -46,7 +51,26 @@ const slides = [
     author: "Victor Hugo",
     year: "1862",
     bio: "1802 — 1885 · Besançon",
-    q: "les miserables",
+    quote: "Hope is the word which God has written on the brow of every man.",
+    id: "OL1063588W",
+  },
+];
+
+const perks = [
+  {
+    icon: "lucide:book-open",
+    title: "Curated classics",
+    text: "Hand-picked titles",
+  },
+  {
+    icon: "lucide:heart",
+    title: "Wishlist",
+    text: "Save books for later",
+  },
+  {
+    icon: "lucide:shopping-bag",
+    title: "Easy cart",
+    text: "Demo checkout",
   },
 ];
 
@@ -58,13 +82,17 @@ export default function Hero() {
   const current = slides[index];
   const prevSlide = slides[(index - 1 + total) % total];
   const nextSlide = slides[(index + 1) % total];
+  const { price, demo } = toItem({
+    id: current.id,
+    volumeInfo: { title: current.title },
+  });
 
   return (
     <section className="grid border-b border-line lg:grid-cols-2">
       <div className="flex flex-col justify-center px-6 py-12 md:px-12 lg:py-24">
         <p className="flex items-center gap-4 text-[11px] uppercase tracking-[0.3em] text-burgundy">
           <span className="h-px w-12 bg-gold" />
-          A digital literary library
+          N° 27 — The Literary Review
         </p>
 
         <h1 className="mt-8 text-5xl leading-[1.05] md:text-7xl">
@@ -94,32 +122,20 @@ export default function Hero() {
         </div>
 
         <div className="mt-12 grid grid-cols-3 divide-x divide-line border-y border-line">
-          <div className="px-2 py-6 text-center sm:px-6">
-            <p className="font-serif text-sm text-burgundy sm:text-lg md:text-xl">
-              Open Library
-            </p>
-            <p className="mt-3 text-[10px] uppercase tracking-[0.2em] text-muted">
-              Book data
-            </p>
-          </div>
-
-          <div className="px-2 py-6 text-center sm:px-6">
-            <p className="font-serif text-sm text-burgundy sm:text-lg md:text-xl">
-              Saved locally
-            </p>
-            <p className="mt-3 text-[10px] uppercase tracking-[0.2em] text-muted">
-              Wishlist &amp; cart
-            </p>
-          </div>
-
-          <div className="px-2 py-6 text-center sm:px-6">
-            <p className="font-serif text-sm text-burgundy sm:text-lg md:text-xl">
-              Demo only
-            </p>
-            <p className="mt-3 text-[10px] uppercase tracking-[0.2em] text-muted">
-              No orders placed
-            </p>
-          </div>
+          {perks.map((perk) => (
+            <div key={perk.title} className="px-2 py-6 text-center sm:px-6">
+              <Icon
+                icon={perk.icon}
+                className="mx-auto h-6 w-6 text-gold-deep md:h-7 md:w-7"
+              />
+              <p className="mt-3 font-serif text-sm leading-snug text-ink sm:text-base">
+                {perk.title}
+              </p>
+              <p className="mt-1 text-[10px] uppercase tracking-[0.15em] text-muted sm:text-[11px]">
+                {perk.text}
+              </p>
+            </div>
+          ))}
         </div>
       </div>
 
@@ -174,8 +190,17 @@ export default function Hero() {
             {current.author} · {current.year}
           </p>
           <p className="mt-3 text-sm text-cream/70">{current.bio}</p>
+          <p className="mt-5 font-['Inter',sans-serif] text-3xl font-light tracking-tight text-gold">
+            {formatPrice(price)}
+            {demo && (
+              <span className="ml-2 text-xs tracking-normal text-cream/60">
+                demo
+              </span>
+            )}
+          </p>
+
           <Link
-            to={`/discover?q=${encodeURIComponent(current.q)}`}
+            to={`/books/${current.id}`}
             className="mt-6 text-xs uppercase tracking-[0.3em] text-gold"
           >
             View details
@@ -196,6 +221,10 @@ export default function Hero() {
             ))}
           </div>
 
+          <p className="mx-auto mt-8 flex max-w-sm items-center justify-center gap-3 font-serif text-sm italic text-cream/80">
+            <Icon icon="lucide:quote" className="h-4 w-4 shrink-0 text-gold" />
+            {current.quote}
+          </p>
         </div>
       </div>
     </section>

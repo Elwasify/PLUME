@@ -3,30 +3,44 @@ import { Link, useParams } from "react-router-dom";
 import { Icon } from "@iconify/react";
 import BookCard from "../../components/BookCard/BookCard";
 import { authorQuery, searchBooks } from "../../api/books";
+import { searchAuthors } from "../../api/authors";
 import usePageTitle from "../../hooks/usePageTitle";
 
 const WRITER_RE =
   /writer|author|novelist|poet|playwright|dramatist|essayist|philosopher|journalist|historian|critic|short story/i;
 
+async function fetchSummary(title, signal) {
+  const res = await fetch(
+    `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(
+      title.replace(/ /g, "_"),
+    )}`,
+    { signal },
+  );
+  if (!res.ok) return null;
+  const d = await res.json();
+  if (d.type === "disambiguation") return null;
+  if (!WRITER_RE.test(d.description || "")) return null;
+  return d;
+}
+
 async function fetchBio(name, signal) {
   const titles = [name, `${name} (writer)`, `${name} (author)`];
   for (const t of titles) {
     try {
-      const res = await fetch(
-        `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(
-          t.replace(/ /g, "_"),
-        )}`,
-        { signal },
-      );
-      if (!res.ok) continue;
-      const d = await res.json();
-      if (d.type === "disambiguation") continue;
-      if (!WRITER_RE.test(d.description || "")) continue;
-      return d;
+      const d = await fetchSummary(t, signal);
+      if (d) return d;
     } catch (e) {
       if (e.name === "AbortError") throw e;
     }
   }
+
+  try {
+    const found = await searchAuthors(name, signal, 1);
+    if (found[0]) return await fetchSummary(found[0].name, signal);
+  } catch (e) {
+    if (e.name === "AbortError") throw e;
+  }
+
   return null;
 }
 
@@ -58,7 +72,6 @@ async function fetchWorks(name, signal) {
 
 export default function Author() {
   const { name } = useParams();
-  usePageTitle(name || "Author");
   const [retry, setRetry] = useState(0);
   const key = `${name}::${retry}`;
 
@@ -91,6 +104,7 @@ export default function Author() {
 
   const bioLoading = bioRes.key !== key;
   const bio = bioLoading ? null : bioRes.data;
+  usePageTitle(bio?.title || name || "Author");
   const booksLoading = booksRes.key !== key;
   const books = booksLoading ? [] : booksRes.list;
   const booksError = !booksLoading && booksRes.error;

@@ -1,56 +1,86 @@
 # PLUME
 
-PLUME is a French-inspired literary library for discovering books and keeping a personal wishlist and shopping bag in the browser.
+PLUME is a French-themed literary library for discovering books and authors, built as a frontend-only graduation project at ITI. There is no backend: all data comes from public APIs, and the wishlist and cart live in the browser.
+
+## Screenshots
+
+| Home | Discover |
+| --- | --- |
+| ![Home page](docs/screenshots/home.png) | ![Discover page, searching "Dostoevsky"](docs/screenshots/discover.png) |
+
+| Book details | Categories |
+| --- | --- |
+| ![Book details page](docs/screenshots/book.png) | ![Categories page](docs/screenshots/categories.png) |
+
+| Cart |
+| --- |
+| ![Cart page](docs/screenshots/cart.png) |
 
 ## Features
 
-- Search and browse books by title, author, subject, and category.
-- Open book and author detail pages from search results.
-- Save books to a wishlist and shopping bag, with data stored in `localStorage`.
-- Adjust bag quantities and see demo prices in a checkout preview.
-- Use the site on desktop, tablet, or mobile screens.
+- Home page with a curated literary landing section.
+- Discover page to search books by title or author, with an Authors section above the book results.
+- Categories page to browse books by subject.
+- Book details page for each book.
+- Author pages with a biography summary from Wikipedia and a list of the author's books.
+- Wishlist and cart, saved in the browser with `localStorage`.
+- About page and a custom 404 page.
 
-PLUME is a frontend portfolio project. Checkout and newsletter forms are demonstrations; they do not place orders, take payment, or send email.
+## Demo notice
 
-## Technology
+PLUME is not a real store.
+
+- Prices are demo prices generated deterministically in the app. They are not real prices.
+- Checkout is a demo. It does not place orders or take payment.
+- The newsletter form is a demo. It does not send or store any email.
+
+## Tech stack
 
 - React and Vite
 - React Router
 - Tailwind CSS v4
-- Iconify with Lucide icons
+- Iconify (`@iconify/react`) with Lucide icons
 - Native `fetch`, React Context, and `localStorage`
 
 ## Getting started
 
-Install Node.js, then open the project folder in a terminal and install its dependencies:
+Requirements: Node.js and npm.
 
 ```bash
-npm ci
-```
-
-Start the local development server:
-
-```bash
+git clone https://github.com/Elwasify/PLUME.git
+cd PLUME
+npm install
 npm run dev
 ```
 
-Vite prints the local address in the terminal. Open that address in a browser.
+Vite prints the local address in the terminal. Open it in your browser.
 
-## Commands
+Other commands:
 
 ```bash
-npm run dev
 npm run build
 npm run preview
 npm run lint
 ```
 
-## Book data and images
+## API keys
 
-Book search, metadata, and catalog covers come from [Open Library](https://openlibrary.org/). Results and cover availability depend on its catalog. The homepage selection also uses local cover artwork. Some books show clearly marked demo prices because this project has no sales backend.
+No API keys are required. The project reads no environment variables, so there is no `.env` file to create.
 
-The Kafka portrait on the About page is [“Franz Kafka, 1923” on Wikimedia Commons](https://commons.wikimedia.org/wiki/File:Franz_Kafka,_1923.jpg), credited there to an unknown photographer and marked public domain.
+## Data sources
+
+- Books: [Open Library](https://openlibrary.org/), through its public API with no key. Results and cover availability depend on the Open Library catalog.
+- Authors: [Wikipedia](https://www.wikipedia.org/) summary and search APIs. Wikipedia text is available under [CC BY-SA](https://creativecommons.org/licenses/by-sa/4.0/).
+
+## Image credits
+
+- Kafka portrait on the About page: [Franz Kafka, 1923](https://commons.wikimedia.org/wiki/File:Franz_Kafka,_1923.jpg) on Wikimedia Commons, public domain.
+- Book covers are loaded from Open Library.
 
 ## Deployment
 
-The project includes a Vercel rewrite so direct visits and refreshes on React Router paths load the app. No production deployment URL is listed because deployment has not been verified.
+The project includes a `vercel.json` with a single-page-app rewrite so that refreshing or opening an inner route directly loads the app.
+
+## Known limitations
+
+- The author page matches books by exact normalized author name, so authors whose names are stored with alternate spellings in Open Library may show fewer books.

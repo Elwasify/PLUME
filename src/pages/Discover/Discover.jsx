@@ -2,8 +2,10 @@ import { useCallback, useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Icon } from "@iconify/react";
 import BookCard from "../../components/BookCard/BookCard";
+import AuthorCard from "../../components/AuthorCard/AuthorCard";
 import categories from "../../data/categories";
 import { searchBooks } from "../../api/books";
+import { searchAuthors } from "../../api/authors";
 import usePageTitle from "../../hooks/usePageTitle";
 
 const LIMIT = 20;
@@ -66,10 +68,13 @@ export default function Discover() {
     done: false,
     error: false,
   });
+  const [authorsData, setAuthorsData] = useState({ key: "", list: [] });
   const [more, setMore] = useState({ loading: false, error: false });
 
   const fullKey = JSON.stringify([q, category, sort, retry]);
   const value = draft ?? q;
+  const authorTerm = q.trim();
+  const wantsAuthors = authorTerm.length >= 2 && !category;
 
   const update = useCallback(
     (changes) => {
@@ -140,8 +145,28 @@ export default function Discover() {
     return () => ctrl.abort();
   }, [q, category, sort, fullKey]);
 
+  useEffect(() => {
+    if (!wantsAuthors) return;
+    const ctrl = new AbortController();
+
+    searchAuthors(authorTerm, ctrl.signal, 3)
+      .then((list) => {
+        if (!ctrl.signal.aborted) {
+          setAuthorsData({ key: authorTerm, list });
+        }
+      })
+      .catch((err) => {
+        if (err.name === "AbortError") return;
+        setAuthorsData({ key: authorTerm, list: [] });
+      });
+
+    return () => ctrl.abort();
+  }, [authorTerm, wantsAuthors]);
+
   const loading = data.key !== fullKey;
   const books = loading ? [] : data.books;
+  const authors =
+    wantsAuthors && authorsData.key === authorTerm ? authorsData.list : [];
   const hasFilters = Boolean(q || category || sort);
 
   async function loadMore() {
@@ -230,7 +255,7 @@ export default function Discover() {
           value={value}
           onChange={(e) => setDraft(e.target.value)}
           placeholder="Search by title, author or subject…"
-          aria-label="Search books"
+          aria-label="Search books and authors"
           className="w-full bg-transparent px-3 py-3 text-base outline-none placeholder:text-muted"
         />
         {value && (
@@ -316,6 +341,33 @@ export default function Discover() {
           )}
         </div>
       </div>
+
+      {authors.length > 0 && (
+        <section aria-labelledby="authors-heading" className="mt-12">
+          <p className="text-[11px] uppercase tracking-[0.3em] text-gold-deep">
+            Authors
+          </p>
+          <h2 id="authors-heading" className="mt-3 text-3xl md:text-4xl">
+            Writers <em className="text-burgundy">matching</em> your search
+          </h2>
+          <div className="mt-8 grid gap-4 md:grid-cols-2 md:gap-6 lg:grid-cols-3">
+            {authors.map((author) => (
+              <AuthorCard key={author.id} author={author} />
+            ))}
+          </div>
+        </section>
+      )}
+
+      {authors.length > 0 && !loading && books.length > 0 && (
+        <div className="mt-14">
+          <p className="text-[11px] uppercase tracking-[0.3em] text-gold-deep">
+            Books
+          </p>
+          <h2 className="mt-3 text-3xl md:text-4xl">
+            Titles for <em className="text-burgundy">“{q}”</em>
+          </h2>
+        </div>
+      )}
 
       {loading && (
         <div className="mt-10 grid grid-cols-2 gap-4 md:grid-cols-4 md:gap-6">

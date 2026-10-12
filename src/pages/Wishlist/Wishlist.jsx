@@ -40,7 +40,7 @@ export default function Wishlist() {
           {wishlist.map((b) => {
             const qty = cartQty(b.id);
             return (
-              <article key={b.id} className="group">
+              <article key={b.id} className="group flex h-full flex-col">
                 <div className="relative">
                   <Link
                     to={`/books/${b.id}`}
@@ -63,34 +63,37 @@ export default function Wishlist() {
                   </button>
                 </div>
 
-                <h3 className="mt-3 line-clamp-2 font-serif text-lg text-burgundy">
+                <h3 className="mt-3 line-clamp-2 h-14 font-serif text-lg leading-7 text-burgundy">
                   <Link to={`/books/${b.id}`} className="hover:underline">
                     {b.title}
                   </Link>
                 </h3>
-                <p className="text-sm text-ink/70">
+                <p className="mt-1 line-clamp-1 h-5 text-sm leading-5 text-ink/70">
                   {b.authors.length === 0
                     ? "Unknown author"
                     : b.authors.join(", ")}
                 </p>
-                <p className="mt-2 font-['Inter',sans-serif] text-sm font-light text-burgundy">
-                  {formatPrice(b.price)}
-                  {b.demo && (
-                    <span className="ml-1 text-[10px] text-muted">demo</span>
-                  )}
-                </p>
 
-                <button
-                  type="button"
-                  onClick={() => addToCart(b)}
-                  className="mt-3 flex w-full items-center justify-center gap-2 border border-line py-2 text-[11px] uppercase tracking-[0.2em] transition hover:border-burgundy hover:text-burgundy"
-                >
-                  <Icon
-                    icon={qty > 0 ? "lucide:check" : "lucide:shopping-bag"}
-                    className="h-3.5 w-3.5"
-                  />
-                  {qty > 0 ? `In bag (${qty})` : "Add to bag"}
-                </button>
+                <div className="mt-auto pt-3">
+                  <p className="font-['Inter',sans-serif] text-sm font-light text-burgundy">
+                    {formatPrice(b.price)}
+                    {b.demo && (
+                      <span className="ml-1 text-[10px] text-muted">demo</span>
+                    )}
+                  </p>
+
+                  <button
+                    type="button"
+                    onClick={() => addToCart(b)}
+                    className="mt-3 flex h-10 w-full items-center justify-center gap-2 border border-line text-[11px] uppercase tracking-[0.2em] transition hover:border-burgundy hover:text-burgundy"
+                  >
+                    <Icon
+                      icon={qty > 0 ? "lucide:check" : "lucide:shopping-bag"}
+                      className="h-3.5 w-3.5"
+                    />
+                    {qty > 0 ? `In bag (${qty})` : "Add to bag"}
+                  </button>
+                </div>
               </article>
             );
           })}

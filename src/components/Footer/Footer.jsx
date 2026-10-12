@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { Icon } from "@iconify/react";
 import Logo from "../Logo/Logo";
 import categories from "../../data/categories";
+import socials from "../../data/socials";
 
 const columns = [
   {
@@ -27,16 +28,6 @@ const columns = [
       label: c.name,
       to: `/discover?category=${encodeURIComponent(c.name)}`,
     })),
-  },
-];
-
-const socials = [
-  { label: "GitHub", href: "https://github.com/", icon: "ri:github-fill" },
-  { label: "X", href: "https://x.com/", icon: "ri:twitter-x-fill" },
-  {
-    label: "LinkedIn",
-    href: "https://www.linkedin.com/",
-    icon: "ri:linkedin-fill",
   },
 ];
 
@@ -146,9 +137,9 @@ export default function Footer() {
                 key={s.label}
                 href={s.href}
                 target="_blank"
-                rel="noreferrer"
+                rel="noopener noreferrer"
                 aria-label={s.label}
-                className="rounded-md border border-cream/15 p-2.5 text-cream/60 transition hover:border-gold hover:text-gold"
+                className="rounded-md border border-cream/15 p-2.5 text-taupe transition hover:border-gold hover:text-gold"
               >
                 <Icon icon={s.icon} className="h-4 w-4" />
               </a>

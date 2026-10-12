@@ -15,7 +15,7 @@ export default function BookCard({ book }) {
   const qty = cartQty(book.id);
 
   return (
-    <article className="group">
+    <article className="group flex h-full flex-col">
       <div className="relative">
         <Link
           to={`/books/${book.id}`}
@@ -25,6 +25,7 @@ export default function BookCard({ book }) {
             src={cover}
             alt={`Cover of ${info.title}`}
             title={info.title}
+            author={authors[0]}
             className="h-full w-full object-cover transition duration-300 group-hover:scale-105"
           />
         </Link>
@@ -38,18 +39,18 @@ export default function BookCard({ book }) {
         >
           <Icon
             icon="lucide:heart"
-            className={`h-4 w-4 ${liked ? "fill-burgundy" : ""}`}
+            className={`h-4 w-4 ${liked ? "[&_path]:fill-burgundy" : ""}`}
           />
         </button>
       </div>
 
-      <h3 className="mt-3 line-clamp-2 font-serif text-lg text-burgundy">
+      <h3 className="mt-3 line-clamp-2 h-14 font-serif text-lg leading-7 text-burgundy">
         <Link to={`/books/${book.id}`} className="hover:underline">
           {info.title}
         </Link>
       </h3>
 
-      <p className="text-sm text-ink/70">
+      <p className="mt-1 line-clamp-1 h-5 text-sm leading-5 text-ink/70">
         {authors.length === 0
           ? "Unknown author"
           : authors.map((name, i) => (
@@ -65,35 +66,37 @@ export default function BookCard({ book }) {
             ))}
       </p>
 
-      <div className="mt-2 flex items-center justify-between font-['Inter',sans-serif] text-sm font-light">
-        {rating ? (
-          <span className="flex items-center gap-1 text-ink">
-            <Icon
-              icon="lucide:star"
-              className="h-3.5 w-3.5 fill-gold text-gold"
-            />
-            {rating}
+      <div className="mt-auto pt-3">
+        <div className="flex h-5 items-center justify-between font-['Inter',sans-serif] text-sm font-light">
+          {rating ? (
+            <span className="flex items-center gap-1 text-ink">
+              <Icon
+                icon="lucide:star"
+                className="h-3.5 w-3.5 text-gold [&_path]:fill-gold"
+              />
+              {rating}
+            </span>
+          ) : (
+            <span />
+          )}
+          <span className="text-burgundy">
+            {formatPrice(price)}
+            {demo && <span className="ml-1 text-[10px] text-muted">demo</span>}
           </span>
-        ) : (
-          <span />
-        )}
-        <span className="text-burgundy">
-          {formatPrice(price)}
-          {demo && <span className="ml-1 text-[10px] text-muted">demo</span>}
-        </span>
-      </div>
+        </div>
 
-      <button
-        type="button"
-        onClick={() => addToCart(book)}
-        className="mt-3 flex w-full items-center justify-center gap-2 border border-line py-2 text-[11px] uppercase tracking-[0.2em] transition hover:border-burgundy hover:text-burgundy"
-      >
-        <Icon
-          icon={qty > 0 ? "lucide:check" : "lucide:shopping-bag"}
-          className="h-3.5 w-3.5"
-        />
-        {qty > 0 ? `In bag (${qty})` : "Add to bag"}
-      </button>
+        <button
+          type="button"
+          onClick={() => addToCart(book)}
+          className="mt-3 flex h-10 w-full items-center justify-center gap-2 border border-line text-[11px] uppercase tracking-[0.2em] transition hover:border-burgundy hover:text-burgundy"
+        >
+          <Icon
+            icon={qty > 0 ? "lucide:check" : "lucide:shopping-bag"}
+            className="h-3.5 w-3.5"
+          />
+          {qty > 0 ? `In bag (${qty})` : "Add to bag"}
+        </button>
+      </div>
     </article>
   );
 }
