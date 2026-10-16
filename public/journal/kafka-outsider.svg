@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 840" fill="none">
+  <rect width="600" height="840" fill="#efe6d3"/>
+  <path d="M0 0h600v260L0 350V0Z" fill="#5b1724"/>
+  <path d="M0 640 600 510v330H0V640Z" fill="#211e1b"/>
+  <path d="M76 126h154v272H76z" fill="#d7aa59"/>
+  <path d="M94 145h118v232H94z" fill="#5b1724"/>
+  <path d="M153 145v232M94 259h118" stroke="#e6c98d" stroke-width="10"/>
+  <path d="M308 510c14-88 32-139 70-154 41-16 79 16 93 68l42 166H288l20-80Z" fill="#5b1724"/>
+  <circle cx="379" cy="325" r="48" fill="#211e1b"/>
+  <path d="m268 475-72 67 51 48 72-58M455 445l78 27-21 55-89-15" fill="#5b1724"/>
+  <path d="M52 720h496" stroke="#d7aa59" stroke-width="3"/>
+  <text x="52" y="764" fill="#efe6d3" font-family="Georgia,serif" font-size="27" letter-spacing="8">THE OUTSIDER</text>
+</svg>

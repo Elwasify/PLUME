@@ -4,7 +4,7 @@ import { Icon } from "@iconify/react";
 import BookCard from "../../components/BookCard/BookCard";
 import AuthorCard from "../../components/AuthorCard/AuthorCard";
 import categories from "../../data/categories";
-import { searchBooks } from "../../api/books";
+import { searchBooksPage } from "../../api/books";
 import { searchAuthors } from "../../api/authors";
 import usePageTitle from "../../hooks/usePageTitle";
 
@@ -14,7 +14,25 @@ const RECENT_KEY = "plume:recent-searches";
 const SORTS = [
   { value: "", label: "Relevance" },
   { value: "newest", label: "Newest" },
+  { value: "alphabetical", label: "A to Z" },
 ];
+
+function hasMore(page, total, totalExact, received, limit) {
+  const nextOffset = page * limit + received;
+  if (totalExact && Number.isFinite(total)) return nextOffset < total;
+  return received >= limit;
+}
+
+function sortBooks(books, sort) {
+  if (sort !== "alphabetical") return books;
+  return [...books].sort((a, b) =>
+    (a.volumeInfo.title || "").localeCompare(
+      b.volumeInfo.title || "",
+      undefined,
+      { sensitivity: "base" },
+    ),
+  );
+}
 
 function loadRecent() {
   try {
@@ -66,10 +84,12 @@ export default function Discover() {
     books: [],
     page: 0,
     done: false,
+    total: null,
+    totalExact: false,
     error: false,
   });
   const [authorsData, setAuthorsData] = useState({ key: "", list: [] });
-  const [more, setMore] = useState({ loading: false, error: false });
+  const [more, setMore] = useState({ key: "", loading: false, error: false });
 
   const fullKey = JSON.stringify([q, category, sort, retry]);
   const value = draft ?? q;
@@ -117,29 +137,45 @@ export default function Discover() {
   useEffect(() => {
     const ctrl = new AbortController();
 
-    searchBooks(
+    searchBooksPage(
       {
         q,
         category,
-        orderBy: sort || "relevance",
+        orderBy: sort === "alphabetical" ? "relevance" : sort || "relevance",
         offset: 0,
         limit: LIMIT,
       },
       ctrl.signal,
     )
-      .then((list) => {
+      .then((result) => {
         if (ctrl.signal.aborted) return;
         setData({
           key: fullKey,
-          books: list,
+          books: result.books,
           page: 1,
-          done: list.length === 0,
+          done: !hasMore(
+            0,
+            result.total,
+            result.totalExact,
+            result.received,
+            LIMIT,
+          ),
+          total: result.total,
+          totalExact: result.totalExact,
           error: false,
         });
       })
       .catch((err) => {
         if (err.name === "AbortError") return;
-        setData({ key: fullKey, books: [], page: 0, done: true, error: true });
+        setData({
+          key: fullKey,
+          books: [],
+          page: 0,
+          done: true,
+          total: null,
+          totalExact: false,
+          error: true,
+        });
       });
 
     return () => ctrl.abort();
@@ -164,38 +200,51 @@ export default function Discover() {
   }, [authorTerm, wantsAuthors]);
 
   const loading = data.key !== fullKey;
-  const books = loading ? [] : data.books;
+  const books = loading ? [] : sortBooks(data.books, sort);
   const authors =
     wantsAuthors && authorsData.key === authorTerm ? authorsData.list : [];
   const hasFilters = Boolean(q || category || sort);
 
   async function loadMore() {
-    if (more.loading) return;
-    setMore({ loading: true, error: false });
+    if ((more.key === fullKey && more.loading) || loading || data.done) return;
+    setMore({ key: fullKey, loading: true, error: false });
     const key = fullKey;
 
     try {
-      const list = await searchBooks({
+      const result = await searchBooksPage({
         q,
         category,
-        orderBy: sort || "relevance",
+        orderBy: sort === "alphabetical" ? "relevance" : sort || "relevance",
         offset: data.page * LIMIT,
         limit: LIMIT,
       });
       setData((prev) => {
         if (prev.key !== key) return prev;
         const ids = new Set(prev.books.map((b) => b.id));
-        const fresh = list.filter((b) => !ids.has(b.id));
+        const fresh = result.books.filter((b) => {
+          if (ids.has(b.id)) return false;
+          ids.add(b.id);
+          return true;
+        });
+        const nextPage = prev.page + 1;
         return {
           ...prev,
           books: [...prev.books, ...fresh],
-          page: prev.page + 1,
-          done: list.length === 0,
+          page: nextPage,
+          done: !hasMore(
+            prev.page,
+            result.total,
+            result.totalExact,
+            result.received,
+            LIMIT,
+          ),
+          total: result.total,
+          totalExact: result.totalExact,
         };
       });
-      setMore({ loading: false, error: false });
+      setMore({ key, loading: false, error: false });
     } catch {
-      setMore({ loading: false, error: true });
+      setMore({ key, loading: false, error: true });
     }
   }
 
@@ -423,7 +472,7 @@ export default function Discover() {
           </div>
 
           <div className="mt-12 text-center">
-            {more.error && (
+            {more.key === fullKey && more.error && (
               <p className="mb-3 text-sm text-burgundy">
                 We could not load more books.
               </p>
@@ -432,10 +481,10 @@ export default function Discover() {
               <button
                 type="button"
                 onClick={loadMore}
-                disabled={more.loading}
+                disabled={more.key === fullKey && more.loading}
                 className="border border-line px-8 py-3 text-xs uppercase tracking-[0.2em] transition hover:border-burgundy hover:text-burgundy disabled:opacity-50"
               >
-                {more.loading ? "Loading…" : "Load more"}
+                {more.key === fullKey && more.loading ? "Loading…" : "Load more"}
               </button>
             )}
           </div>

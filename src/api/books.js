@@ -1,11 +1,13 @@
+import { requestJson } from "./request";
+
 const BASE = "https://openlibrary.org";
-const LIST_FIELDS = "key,title,author_name,cover_i,isbn,first_publish_year";
+const LIST_FIELDS =
+  "key,title,author_name,cover_i,isbn,first_publish_year,subject,edition_count";
 const LANGS = { en: "eng", fr: "fre", ar: "ara" };
-const MAX_ATTEMPTS = 3;
 
 const coverUrl = (id, size = "M") =>
   id
-    ? `https://covers.openlibrary.org/b/id/${id}-${size}.jpg?default=false`
+    ? `https://covers.openlibrary.org/b/id/${encodeURIComponent(id)}-${size}.jpg?default=false`
     : undefined;
 
 const isbnCoverUrl = (isbn, size = "M") =>
@@ -13,85 +15,55 @@ const isbnCoverUrl = (isbn, size = "M") =>
     ? `https://covers.openlibrary.org/b/isbn/${encodeURIComponent(isbn)}-${size}.jpg?default=false`
     : undefined;
 
-function delay(ms, signal) {
-  return new Promise((resolve, reject) => {
-    if (signal?.aborted) {
-      reject(new DOMException("The request was aborted", "AbortError"));
-      return;
-    }
-
-    const timeout = setTimeout(() => {
-      signal?.removeEventListener("abort", abort);
-      resolve();
-    }, ms);
-
-    function abort() {
-      clearTimeout(timeout);
-      reject(new DOMException("The request was aborted", "AbortError"));
-    }
-
-    signal?.addEventListener("abort", abort, { once: true });
-  });
-}
-
-async function getJson(url, signal) {
-  for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt += 1) {
-    try {
-      const response = await fetch(url, { signal });
-
-      if (response.ok) return await response.json();
-
-      if (
-        ![429, 503].includes(response.status) ||
-        attempt === MAX_ATTEMPTS - 1
-      ) {
-        throw new Error(
-          `Open Library request failed (${response.status} ${response.statusText})`,
-        );
-      }
-    } catch (error) {
-      if (error.name === "AbortError" || attempt === MAX_ATTEMPTS - 1) {
-        throw error;
-      }
-
-      if (error.message.startsWith("Open Library request failed (")) {
-        throw error;
-      }
-    }
-
-    await delay(500 * (attempt + 1), signal);
-  }
-
-  throw new Error("Open Library request failed after multiple attempts");
-}
-
 function toBook(doc) {
   if (!doc || typeof doc !== "object") return null;
   const key = typeof doc.key === "string" ? doc.key : "";
   const workId = key.match(/^(?:\/works\/)?(OL\d+W)$/i)?.[1];
   if (!workId) return null;
+
   const isbns = Array.isArray(doc.isbn) ? doc.isbn : [];
-  const cover =
-    coverUrl(doc.cover_i) || isbnCoverUrl(isbns[0]);
+  const cover = coverUrl(doc.cover_i) || isbnCoverUrl(isbns[0]);
+  const year = Number(doc.first_publish_year);
+  const authors = Array.isArray(doc.author_name)
+    ? doc.author_name.filter(
+        (author) => typeof author === "string" && author.trim(),
+      )
+    : [];
+  const subjects = Array.isArray(doc.subject)
+    ? doc.subject.filter((subject) => typeof subject === "string" && subject.trim())
+    : [];
 
   return {
     id: workId.toUpperCase(),
     volumeInfo: {
       title:
         typeof doc.title === "string" && doc.title.trim()
-          ? doc.title
+          ? doc.title.trim()
           : "Untitled",
-      authors: Array.isArray(doc.author_name)
-        ? doc.author_name.filter(
-            (author) => typeof author === "string" && author.trim(),
-          )
-        : [],
-      publishedDate: doc.first_publish_year
-        ? String(doc.first_publish_year)
+      authors,
+      publishedDate:
+        Number.isInteger(year) && year > 0 ? String(year) : undefined,
+      categories: subjects.slice(0, 5),
+      editionCount: Number.isInteger(doc.edition_count)
+        ? doc.edition_count
         : undefined,
       imageLinks: cover ? { thumbnail: cover } : undefined,
     },
   };
+}
+
+function normalizeBooks(docs) {
+  const seen = new Set();
+  const books = [];
+
+  for (const doc of Array.isArray(docs) ? docs : []) {
+    const book = toBook(doc);
+    if (!book || seen.has(book.id)) continue;
+    seen.add(book.id);
+    books.push(book);
+  }
+
+  return books;
 }
 
 export function authorQuery(name) {
@@ -102,7 +74,7 @@ export function authorQuery(name) {
   return `author:"${escaped}"`;
 }
 
-export async function searchBooks(
+export async function searchBooksPage(
   {
     q = "",
     category = "",
@@ -114,24 +86,46 @@ export async function searchBooks(
   signal,
 ) {
   const parts = [];
-  if (q.trim()) parts.push(q.trim());
-  if (category.trim()) {
-    parts.push(`subject:"${category.trim().replaceAll('"', '\\"')}"`);
+  if (String(q).trim()) parts.push(String(q).trim());
+  if (String(category).trim()) {
+    const escapedCategory = String(category)
+      .trim()
+      .replaceAll("\\", "\\\\")
+      .replaceAll('"', '\\"');
+    parts.push(`subject:"${escapedCategory}"`);
   }
   if (lang && LANGS[lang]) parts.push(`language:${LANGS[lang]}`);
 
+  const safeOffset = Math.max(0, Math.floor(Number(offset) || 0));
+  const safeLimit = Math.min(100, Math.max(1, Math.floor(Number(limit) || 12)));
   const params = new URLSearchParams({
     q: parts.join(" ") || 'subject:"fiction"',
     fields: LIST_FIELDS,
-    limit: String(limit),
-    offset: String(offset),
+    limit: String(safeLimit),
+    offset: String(safeOffset),
   });
   if (orderBy === "newest") params.set("sort", "new");
+  if (orderBy === "oldest") params.set("sort", "old");
 
-  const data = await getJson(`${BASE}/search.json?${params}`, signal);
-  return (Array.isArray(data.docs) ? data.docs : [])
-    .map(toBook)
-    .filter(Boolean);
+  const data = await requestJson(`${BASE}/search.json?${params}`, { signal });
+  const totalValue = Number(data?.numFound ?? data?.num_found);
+  const total = Number.isFinite(totalValue) ? totalValue : null;
+  const books = normalizeBooks(data?.docs);
+  const received = Array.isArray(data?.docs) ? data.docs.length : 0;
+
+  return {
+    books,
+    total,
+    totalExact: data?.numFoundExact === true || data?.num_found_exact === true,
+    received,
+    offset: safeOffset,
+    limit: safeLimit,
+  };
+}
+
+export async function searchBooks(options = {}, signal) {
+  const { books } = await searchBooksPage(options, signal);
+  return books;
 }
 
 async function getWork(id, signal) {
@@ -142,9 +136,9 @@ async function getWork(id, signal) {
       throw new Error("Invalid Open Library work ID");
     }
 
-    const work = await getJson(
+    const work = await requestJson(
       `${BASE}/works/${encodeURIComponent(workId)}.json`,
-      signal,
+      { signal },
     );
 
     if (work.type?.key !== "/type/redirect") return work;
@@ -161,15 +155,17 @@ async function getWork(id, signal) {
 }
 
 async function getAuthors(work, signal) {
-  const authorKeys = (work.authors || [])
-    .map((entry) => entry.author?.key)
+  const authorKeys = (Array.isArray(work.authors) ? work.authors : [])
+    .map((entry) => entry?.author?.key)
     .filter((key) => typeof key === "string" && /^\/authors\/OL\d+A$/.test(key));
 
   const results = await Promise.all(
     authorKeys.map(async (key) => {
       try {
-        const author = await getJson(`${BASE}${key}.json`, signal);
-        return author.name;
+        const author = await requestJson(`${BASE}${key}.json`, { signal });
+        return typeof author.name === "string" && author.name.trim()
+          ? author.name.trim()
+          : null;
       } catch (error) {
         if (error.name === "AbortError") throw error;
         console.warn(`Unable to load Open Library author ${key}:`, error);
@@ -182,11 +178,11 @@ async function getAuthors(work, signal) {
 }
 
 async function getEditions(workId, signal) {
+  const params = new URLSearchParams({ limit: "10" });
   try {
-    const params = new URLSearchParams({ limit: "10" });
-    const data = await getJson(
+    const data = await requestJson(
       `${BASE}/works/${encodeURIComponent(workId)}/editions.json?${params}`,
-      signal,
+      { signal },
     );
     return Array.isArray(data.entries) ? data.entries : [];
   } catch (error) {
@@ -198,7 +194,7 @@ async function getEditions(workId, signal) {
 
 export async function getBook(id, signal) {
   const work = await getWork(id, signal);
-  const workId = work.key?.split("/").pop() || String(id).toUpperCase();
+  const workId = (work.key?.split("/").pop() || String(id)).toUpperCase();
   const [authors, editions] = await Promise.all([
     getAuthors(work, signal),
     getEditions(workId, signal),
@@ -216,19 +212,27 @@ export async function getBook(id, signal) {
       ? work.description
       : work.description?.value;
   const coverId = work.covers?.[0] || edition?.covers?.[0];
-  const cover = coverUrl(coverId, "L") || isbnCoverUrl(edition?.isbn_13?.[0] || edition?.isbn_10?.[0], "L");
+  const cover =
+    coverUrl(coverId, "L") ||
+    isbnCoverUrl(edition?.isbn_13?.[0] || edition?.isbn_10?.[0], "L");
 
   return {
     id: workId,
     volumeInfo: {
-      title: work.title || "Untitled",
+      title: typeof work.title === "string" && work.title.trim() ? work.title : "Untitled",
       subtitle: work.subtitle,
       authors,
       description,
-      categories: work.subjects?.slice(0, 3),
+      categories: Array.isArray(work.subjects)
+        ? work.subjects
+            .filter((subject) => typeof subject === "string" && subject.trim())
+            .slice(0, 5)
+        : [],
       publishedDate: edition?.publish_date || work.first_publish_date,
+      publicationFromEdition: Boolean(edition?.publish_date),
       publisher: edition?.publishers?.[0],
       pageCount: edition?.number_of_pages,
+      editionDetailsAvailable: Boolean(edition),
       imageLinks: cover ? { thumbnail: cover } : undefined,
     },
   };

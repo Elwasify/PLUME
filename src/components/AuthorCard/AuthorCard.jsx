@@ -1,7 +1,9 @@
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Icon } from "@iconify/react";
 
 export default function AuthorCard({ author }) {
+  const [failedThumbnail, setFailedThumbnail] = useState("");
   const initials = author.name
     .split(" ")
     .map((word) => word[0])
@@ -15,10 +17,11 @@ export default function AuthorCard({ author }) {
       className="group flex h-full gap-5 border border-line bg-white/40 p-5 transition-colors duration-300 hover:border-burgundy hover:bg-white/70 motion-reduce:transition-none"
     >
       <div className="h-28 w-24 shrink-0 overflow-hidden border border-gold/40 bg-secondary">
-        {author.thumbnail ? (
+        {author.thumbnail && failedThumbnail !== author.thumbnail ? (
           <img
             src={author.thumbnail}
             alt={`Portrait of ${author.name}`}
+            onError={() => setFailedThumbnail(author.thumbnail)}
             loading="lazy"
             className="h-full w-full object-cover object-top"
           />

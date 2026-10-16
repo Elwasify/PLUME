@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 840" fill="none">
+  <rect width="600" height="840" fill="#efe6d3"/>
+  <path d="M0 546 600 470v370H0V546Z" fill="#5b1724"/>
+  <path d="M0 630c150-27 286-23 600-68v46c-314 45-450 41-600 68v-46Z" fill="#d7aa59"/>
+  <path d="M70 514V310h115v189m22 1V247h104v239m20 0V343h103v-99h97v218" fill="#211e1b"/>
+  <path d="M82 329h31v45H82m58-45h31v45h-31m49-57h28v43h-28m50-43h28v43h-28m53 20h30v45h-30m60-45h30v45h-30m73-95h32v43h-32m-390 87v-51l64-45 63 45v66" fill="#d7aa59"/>
+  <path d="M255 248 333 80l77 168M275 208h116m-98-41h80m-61-40h41m-70 121 70-154m8 154-70-154" stroke="#781d2e" stroke-width="10"/>
+  <path d="M47 710h506" stroke="#d7aa59" stroke-width="3"/>
+  <text x="52" y="761" fill="#efe6d3" font-family="Georgia,serif" font-size="28" letter-spacing="6">A CITY REMEMBERS</text>
+</svg>

@@ -4,20 +4,19 @@ import { Icon } from "@iconify/react";
 import BookCard from "../../components/BookCard/BookCard";
 import { authorQuery, searchBooks } from "../../api/books";
 import { searchAuthors } from "../../api/authors";
+import { requestJson } from "../../api/request";
 import usePageTitle from "../../hooks/usePageTitle";
 
 const WRITER_RE =
   /writer|author|novelist|poet|playwright|dramatist|essayist|philosopher|journalist|historian|critic|short story/i;
 
 async function fetchSummary(title, signal) {
-  const res = await fetch(
+  const d = await requestJson(
     `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(
       title.replace(/ /g, "_"),
     )}`,
-    { signal },
+    { signal, ttl: 60 * 60 * 1000 },
   );
-  if (!res.ok) return null;
-  const d = await res.json();
   if (d.type === "disambiguation") return null;
   if (!WRITER_RE.test(d.description || "")) return null;
   return d;
@@ -73,6 +72,7 @@ async function fetchWorks(name, signal) {
 export default function Author() {
   const { name } = useParams();
   const [retry, setRetry] = useState(0);
+  const [failedPortrait, setFailedPortrait] = useState("");
   const key = `${name}::${retry}`;
 
   const [bioRes, setBioRes] = useState({ key: "", data: null });
@@ -131,10 +131,11 @@ export default function Author() {
         <div>
           {bioLoading ? (
             <div className="aspect-[3/4] animate-pulse bg-gold/20" />
-          ) : portrait ? (
+          ) : portrait && failedPortrait !== portrait ? (
             <img
               src={portrait}
               alt={`Portrait of ${name}`}
+              onError={() => setFailedPortrait(portrait)}
               className="aspect-[3/4] w-full border border-gold/40 object-cover"
             />
           ) : (

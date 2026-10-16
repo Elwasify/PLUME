@@ -2,59 +2,7 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Icon } from "@iconify/react";
 import { formatPrice, toItem } from "../../context/shopUtils";
-import prideImg from "../../assets/authors/pride-prejudice.jpg";
-import strangerImg from "../../assets/authors/the-stranger.jpg";
-import nightsImg from "../../assets/authors/white-nights.jpg";
-import metaImg from "../../assets/authors/metamorphosis.jpg";
-import lesMisImg from "../../assets/authors/les-miserables.jpg";
-
-const slides = [
-  {
-    image: prideImg,
-    title: "Pride and Prejudice",
-    author: "Jane Austen",
-    year: "1813",
-    bio: "1775 — 1817 · Hampshire",
-    quote: "I declare after all there is no enjoyment like reading!",
-    id: "OL66554W",
-  },
-  {
-    image: strangerImg,
-    title: "The Stranger",
-    author: "Albert Camus",
-    year: "1942",
-    bio: "1913 — 1960 · Mondovi",
-    quote: "Mother died today.",
-    id: "OL1230613W",
-  },
-  {
-    image: nightsImg,
-    title: "White Nights",
-    author: "Fyodor Dostoevsky",
-    year: "1848",
-    bio: "1821 — 1881 · Moscow",
-    quote: "A whole minute of happiness! Is that too little for a man’s life?",
-    id: "OL166952W",
-  },
-  {
-    image: metaImg,
-    title: "The Metamorphosis",
-    author: "Franz Kafka",
-    year: "1915",
-    bio: "1883 — 1924 · Prague",
-    quote: "He found himself transformed in his bed into a horrible vermin.",
-    id: "OL498556W",
-  },
-  {
-    image: lesMisImg,
-    title: "Les Misérables",
-    author: "Victor Hugo",
-    year: "1862",
-    bio: "1802 — 1885 · Besançon",
-    quote: "Hope is the word which God has written on the brow of every man.",
-    id: "OL1063588W",
-  },
-];
+import { featuredBooks } from "../../data/featuredBooks";
 
 const perks = [
   {
@@ -76,16 +24,13 @@ const perks = [
 
 export default function Hero() {
   const [index, setIndex] = useState(0);
-  const total = slides.length;
+  const total = featuredBooks.length;
   const go = (i) => setIndex((i + total) % total);
 
-  const current = slides[index];
-  const prevSlide = slides[(index - 1 + total) % total];
-  const nextSlide = slides[(index + 1) % total];
-  const { price, demo } = toItem({
-    id: current.id,
-    volumeInfo: { title: current.title },
-  });
+  const current = featuredBooks[index];
+  const prevSlide = featuredBooks[(index - 1 + total) % total];
+  const nextSlide = featuredBooks[(index + 1) % total];
+  const { price, demo } = toItem(current.catalogBook);
 
   return (
     <section className="grid border-b border-line lg:grid-cols-2">
@@ -207,12 +152,12 @@ export default function Hero() {
           </Link>
 
           <div className="mt-8 flex justify-center gap-2">
-            {slides.map((s, i) => (
+            {featuredBooks.map((book, i) => (
               <button
-                key={s.title}
+                key={book.id}
                 type="button"
                 onClick={() => setIndex(i)}
-                aria-label={`Show ${s.title}`}
+                aria-label={`Show ${book.title}`}
                 aria-current={i === index}
                 className={`h-2 rounded-full transition-all ${
                   i === index ? "w-8 bg-gold" : "w-2 bg-cream/30"

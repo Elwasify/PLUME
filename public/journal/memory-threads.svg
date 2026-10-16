@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 840" fill="none">
+  <rect width="600" height="840" fill="#efe6d3"/>
+  <path d="M65 0v840M535 0v840" stroke="#d7aa59" stroke-width="2"/>
+  <path d="M0 150c155 8 169 163 300 165s145-157 300-164M0 325c153-9 175 151 300 152s147-164 300-152M0 502c162 6 165 149 300 151s147-146 300-152M0 676c155-5 174 142 300 143s152-141 300-146" stroke="#5b1724" stroke-width="13"/>
+  <path d="M0 236c160 10 167 116 300 118 130-2 143-114 300-118M0 414c151-7 177 106 300 108 129-1 148-112 300-108M0 588c161 5 166 105 300 107s149-107 300-108" stroke="#211e1b" stroke-width="6"/>
+  <circle cx="300" cy="420" r="35" fill="#d7aa59"/>
+  <path d="M250 420h100M300 370v100" stroke="#efe6d3" stroke-width="4"/>
+  <text x="100" y="777" fill="#211e1b" font-family="Georgia,serif" font-size="31" letter-spacing="8">MEMORY THREADS</text>
+</svg>

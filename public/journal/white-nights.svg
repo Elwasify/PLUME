@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 840" fill="none">
+  <rect width="600" height="840" fill="#efe6d3"/>
+  <rect y="0" width="600" height="352" fill="#211e1b"/>
+  <circle cx="430" cy="137" r="52" fill="#d7aa59"/>
+  <path d="M0 372 600 320v520H0V372Z" fill="#781d2e"/>
+  <path d="M0 526c110-44 199-37 300 2 112 43 194 41 300 0v62c-106 41-188 43-300 0-101-39-190-46-300-2v-60Z" fill="#d7aa59"/>
+  <path d="M0 643c115-37 198-29 296 9 116 45 202 40 304 5v183H0V643Z" fill="#211e1b"/>
+  <path d="M80 350V232l72-52 68 52v107M236 340V203l71-59 74 59v126M397 330V235l56-43 59 43v81" fill="#efe6d3"/>
+  <path d="M100 263h28v47h-28m62-47h27v47h-27m65-48h29v47h-29m63-47h29v47h-29m106-38h24v38h-24m57-38h25v38h-25" fill="#d7aa59"/>
+  <text x="48" y="740" fill="#efe6d3" font-family="Georgia,serif" font-size="27" letter-spacing="6">WHITE NIGHTS</text>
+</svg>

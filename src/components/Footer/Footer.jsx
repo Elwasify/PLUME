@@ -12,6 +12,7 @@ const columns = [
       { label: "Home", to: "/" },
       { label: "Discover", to: "/discover" },
       { label: "Categories", to: "/categories" },
+      { label: "Journal", to: "/journal" },
       { label: "About", to: "/about" },
     ],
   },

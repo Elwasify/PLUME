@@ -7,6 +7,8 @@ import { authorQuery, searchBooks } from "../../api/books";
 import { useShop } from "../../context/useShop";
 import { formatPrice, toItem } from "../../context/shopUtils";
 import BookCover from "../../components/BookCover/BookCover";
+import JournalCard from "../../components/JournalCard/JournalCard";
+import { journalArticles } from "../../data/journalArticles";
 import usePageTitle from "../../hooks/usePageTitle";
 
 function cleanDescription(text) {
@@ -37,6 +39,7 @@ export default function BookDetails() {
   const { book, loading, error, retry } = useBook(id);
   const { addToCart, toggleWishlist, inWishlist, cartQty } = useShop();
   const [rel, setRel] = useState({ id: "", list: [] });
+  const [actionMessage, setActionMessage] = useState("");
   usePageTitle(book?.volumeInfo?.title || "Book details");
 
   useEffect(() => {
@@ -136,11 +139,17 @@ export default function BookDetails() {
   const qty = cartQty(book.id);
   const canRelate = Boolean(relatedOptions(book));
   const relatedLoading = canRelate && rel.id !== book.id;
+  const journalLinks = journalArticles.filter((article) =>
+    article.bookIds.includes(book.id),
+  );
 
   const details = [
-    { label: "Publisher", value: info.publisher },
-    { label: "Published", value: info.publishedDate },
-    { label: "Pages", value: info.pageCount },
+    { label: "Publisher in this edition", value: info.publisher },
+    {
+      label: info.publicationFromEdition ? "Edition publication date" : "First publication",
+      value: info.publishedDate,
+    },
+    { label: "Pages in this edition", value: info.pageCount },
   ].filter((d) => d.value);
 
   return (
@@ -163,7 +172,7 @@ export default function BookDetails() {
               {info.categories.slice(0, 3).map((c) => (
                 <Link
                   key={c}
-                  to={`/discover?q=${encodeURIComponent(c)}`}
+                  to={`/discover?category=${encodeURIComponent(c)}`}
                   className="border border-line px-3 py-1 text-[10px] uppercase tracking-[0.2em] text-gold-deep transition hover:border-burgundy hover:text-burgundy"
                 >
                   {c}
@@ -214,7 +223,10 @@ export default function BookDetails() {
           <div className="mt-6 flex flex-wrap gap-3">
             <button
               type="button"
-              onClick={() => addToCart(book)}
+              onClick={() => {
+                addToCart(book);
+                setActionMessage(`${info.title} added to your cart.`);
+              }}
               className="flex items-center justify-center gap-2 bg-burgundy px-7 py-3.5 text-xs uppercase tracking-[0.2em] text-cream transition hover:bg-burgundy/90"
             >
               <Icon
@@ -225,7 +237,14 @@ export default function BookDetails() {
             </button>
             <button
               type="button"
-              onClick={() => toggleWishlist(book)}
+              onClick={() => {
+                toggleWishlist(book);
+                setActionMessage(
+                  liked
+                    ? `${info.title} removed from your wishlist.`
+                    : `${info.title} saved to your wishlist.`,
+                );
+              }}
               aria-pressed={liked}
               className="flex items-center justify-center gap-2 border border-line px-7 py-3.5 text-xs uppercase tracking-[0.2em] transition hover:border-burgundy hover:text-burgundy"
             >
@@ -236,6 +255,9 @@ export default function BookDetails() {
               {liked ? "In wishlist" : "Add to wishlist"}
             </button>
           </div>
+          <p role="status" aria-live="polite" className="mt-3 min-h-5 text-sm text-muted">
+            {actionMessage}
+          </p>
 
           {paragraphs.length > 0 ? (
             <div className="mt-10 max-w-2xl space-y-4 leading-relaxed text-muted">
@@ -252,21 +274,28 @@ export default function BookDetails() {
           )}
 
           {details.length > 0 && (
-            <dl className="mt-10 grid max-w-2xl grid-cols-2 border-l border-t border-line sm:grid-cols-3">
-              {details.map((d) => (
-                <div
-                  key={d.label}
-                  className="border-b border-r border-line p-4"
-                >
-                  <dt className="text-[10px] uppercase tracking-[0.2em] text-gold-deep">
-                    {d.label}
-                  </dt>
-                  <dd className="mt-1 break-words font-['Inter',sans-serif] text-sm font-light text-ink">
-                    {d.value}
-                  </dd>
-                </div>
-              ))}
-            </dl>
+            <>
+              <dl className="mt-10 grid max-w-2xl grid-cols-2 border-l border-t border-line sm:grid-cols-3">
+                {details.map((d) => (
+                  <div
+                    key={d.label}
+                    className="border-b border-r border-line p-4"
+                  >
+                    <dt className="text-[10px] uppercase tracking-[0.2em] text-gold-deep">
+                      {d.label}
+                    </dt>
+                    <dd className="mt-1 break-words font-['Inter',sans-serif] text-sm font-light text-ink">
+                      {d.value}
+                    </dd>
+                  </div>
+                ))}
+              </dl>
+              {info.editionDetailsAvailable && (
+                <p className="mt-3 text-xs leading-relaxed text-muted">
+                  Edition details are drawn from an available Open Library record and may vary between editions.
+                </p>
+              )}
+            </>
           )}
         </div>
       </section>
@@ -298,6 +327,22 @@ export default function BookDetails() {
               ))}
             </div>
           )}
+        </section>
+      )}
+
+      {journalLinks.length > 0 && (
+        <section aria-labelledby="read-in-journal-heading" className="mt-16 border-t border-line pt-12 md:mt-24">
+          <p className="text-[11px] uppercase tracking-[0.3em] text-gold-deep">
+            Le Journal
+          </p>
+          <h2 id="read-in-journal-heading" className="mt-3 text-3xl md:text-4xl">
+            Read in the <em className="text-burgundy">Journal</em>
+          </h2>
+          <div className="mt-8 grid gap-5 md:grid-cols-2 lg:grid-cols-3">
+            {journalLinks.map((article) => (
+              <JournalCard key={article.id} article={article} />
+            ))}
+          </div>
         </section>
       )}
     </div>
