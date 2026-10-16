@@ -11,8 +11,6 @@ import Wishlist from "./pages/Wishlist/Wishlist";
 import Cart from "./pages/Cart/Cart";
 import BookDetails from "./pages/BookDetails/BookDetails";
 import Author from "./pages/Author/Author";
-import Journal from "./pages/Journal/Journal";
-import Article from "./pages/Journal/Article";
 import NotFound from "./pages/NotFound/NotFound";
 
 export default function App() {
@@ -26,8 +24,6 @@ export default function App() {
           <Route path="/discover" element={<Discover />} />
           <Route path="/categories" element={<Categories />} />
           <Route path="/about" element={<About />} />
-          <Route path="/journal" element={<Journal />} />
-          <Route path="/journal/:id" element={<Article />} />
           <Route path="/wishlist" element={<Wishlist />} />
           <Route path="/cart" element={<Cart />} />
           <Route path="/books/:id" element={<BookDetails />} />

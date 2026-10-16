@@ -7,7 +7,7 @@ import { authorQuery, searchBooks } from "../../api/books";
 import { useShop } from "../../context/useShop";
 import { formatPrice, toItem } from "../../context/shopUtils";
 import BookCover from "../../components/BookCover/BookCover";
-import JournalCard from "../../components/JournalCard/JournalCard";
+import BookJournal from "../../components/BookJournal/BookJournal";
 import { journalArticles } from "../../data/journalArticles";
 import usePageTitle from "../../hooks/usePageTitle";
 
@@ -300,6 +300,8 @@ export default function BookDetails() {
         </div>
       </section>
 
+      <BookJournal articles={journalLinks} />
+
       {canRelate && (
         <section className="mt-16 border-t border-line pt-12 md:mt-24">
           <p className="text-[11px] uppercase tracking-[0.3em] text-gold-deep">
@@ -330,21 +332,6 @@ export default function BookDetails() {
         </section>
       )}
 
-      {journalLinks.length > 0 && (
-        <section aria-labelledby="read-in-journal-heading" className="mt-16 border-t border-line pt-12 md:mt-24">
-          <p className="text-[11px] uppercase tracking-[0.3em] text-gold-deep">
-            Le Journal
-          </p>
-          <h2 id="read-in-journal-heading" className="mt-3 text-3xl md:text-4xl">
-            Read in the <em className="text-burgundy">Journal</em>
-          </h2>
-          <div className="mt-8 grid gap-5 md:grid-cols-2 lg:grid-cols-3">
-            {journalLinks.map((article) => (
-              <JournalCard key={article.id} article={article} />
-            ))}
-          </div>
-        </section>
-      )}
     </div>
   );
 }

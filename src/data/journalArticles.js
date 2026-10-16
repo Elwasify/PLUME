@@ -6,7 +6,6 @@ export const journalArticles = [
     category: "Authors",
     author: "Le Journal Editors",
     publishedAt: "2026-10-02",
-    cover: "/journal/kafka-outsider.svg",
     excerpt:
       "In The Metamorphosis, the strange event is only the beginning. Kafka turns a family bedroom into a precise study of shame, duty and belonging.",
     tags: ["Kafka", "belonging", "fiction"],
@@ -54,7 +53,6 @@ export const journalArticles = [
     category: "Authors",
     author: "Le Journal Editors",
     publishedAt: "2026-09-18",
-    cover: "/journal/white-nights.svg",
     excerpt:
       "White Nights follows a solitary dreamer through a few evenings when attention itself feels like an event. Its tenderness comes with a clear sense of time passing.",
     tags: ["Dostoevsky", "solitude", "love"],
@@ -102,7 +100,6 @@ export const journalArticles = [
     category: "Philosophy",
     author: "Le Journal Editors",
     publishedAt: "2026-08-26",
-    cover: "/journal/the-stranger.svg",
     excerpt:
       "The Stranger can be read as a novel about judgment: what a community notices, what it expects people to feel, and what it cannot accept as silence.",
     tags: ["Camus", "judgment", "meaning"],
@@ -150,7 +147,6 @@ export const journalArticles = [
     category: "Classics",
     author: "Le Journal Editors",
     publishedAt: "2026-07-11",
-    cover: "/journal/paris-memory.svg",
     excerpt:
       "Paris is more than a setting in Les Misérables. The novel turns the city into a map of institutions, private histories and chances to begin again.",
     tags: ["Hugo", "Paris", "memory"],
@@ -198,7 +194,6 @@ export const journalArticles = [
     category: "Classics",
     author: "Le Journal Editors",
     publishedAt: "2026-06-20",
-    cover: "/journal/classics-constellation.svg",
     excerpt:
       "A classic is not a book that has stopped changing. Its language may be old, yet the questions inside it keep meeting readers in the present.",
     tags: ["classics", "rereading", "history"],
@@ -229,7 +224,6 @@ export const journalArticles = [
     category: "Reading Life",
     author: "Le Journal Editors",
     publishedAt: "2026-05-29",
-    cover: "/journal/reading-ritual.svg",
     excerpt:
       "A useful reading routine is flexible enough for real life. Begin with a book you want to return to, then make the next page easy to reach.",
     tags: ["reading", "attention", "habits"],
@@ -260,7 +254,6 @@ export const journalArticles = [
     category: "Places",
     author: "Le Journal Editors",
     publishedAt: "2026-04-17",
-    cover: "/journal/paris-walk.svg",
     excerpt:
       "A literary city is made from more than landmarks. It is built from the paths characters take and the histories a reader carries into them.",
     tags: ["Paris", "places", "Hugo"],
@@ -291,7 +284,6 @@ export const journalArticles = [
     category: "Reading Life",
     author: "Le Journal Editors",
     publishedAt: "2026-03-08",
-    cover: "/journal/memory-threads.svg",
     excerpt:
       "Remembering is not simply replaying. The stories we tell about the past change as new knowledge, distance and attention alter what we can see.",
     tags: ["memory", "storytelling", "fiction"],
@@ -322,7 +314,6 @@ export const journalArticles = [
     category: "Reading Life",
     author: "Le Journal Editors",
     publishedAt: "2026-02-14",
-    cover: "/journal/margin-notes.svg",
     excerpt:
       "Rereading turns the reader into a companion to their earlier self. The pages stay still while our attention changes around them.",
     tags: ["rereading", "attention", "classics"],
@@ -353,7 +344,6 @@ export const journalArticles = [
     category: "Philosophy",
     author: "Le Journal Editors",
     publishedAt: "2026-01-22",
-    cover: "/journal/open-door.svg",
     excerpt:
       "Some of the most memorable endings do not settle every argument. They give a story a shape and let its unfinished questions travel with us.",
     tags: ["fiction", "meaning", "rereading"],

@@ -1,9 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 840" fill="none">
-  <rect width="600" height="840" fill="#d7aa59"/>
-  <path d="M85 88h430v664H85z" fill="#efe6d3"/>
-  <path d="M133 157h333M133 201h280M133 245h333M133 289h210M133 392h333M133 436h287M133 480h333M133 524h210M133 627h333M133 671h284" stroke="#211e1b" stroke-opacity=".35" stroke-width="3"/>
-  <path d="M106 120v596" stroke="#5b1724" stroke-width="3"/>
-  <path d="M386 290c28-43 55-63 80-61-8 26-31 52-72 76m-253 92c41-28 72-39 95-35-12 21-38 38-82 51m214 107c34-42 64-60 89-57-8 26-34 50-78 70" stroke="#5b1724" stroke-width="8" stroke-linecap="round"/>
-  <circle cx="438" cy="179" r="22" stroke="#d7aa59" stroke-width="6"/>
-  <text x="142" y="742" fill="#211e1b" font-family="Georgia,serif" font-size="25" letter-spacing="7">MARGIN NOTES</text>
-</svg>

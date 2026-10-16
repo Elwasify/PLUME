@@ -1,9 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 840" fill="none">
-  <rect width="600" height="840" fill="#5b1724"/>
-  <path d="M0 640 300 360l300 280v200H0V640Z" fill="#efe6d3"/>
-  <path d="M38 612V315h94v210m40 52V233h113v250m17-37V168h110v287m27 24V274h105v342" fill="#211e1b"/>
-  <path d="M58 342h22v46H58m38-46h22v46H96m94-88h27v52h-27m51-52h27v52h-27m-51 31h27v52h-27m51-52h27v52h-27m73-179h27v55h-27m54-55h27v55h-27m-54 32h27v56h-27m54-56h27v56h-27m81 4h28v48h-28m51-48h28v48h-28" fill="#d7aa59"/>
-  <path d="M0 635h600" stroke="#d7aa59" stroke-width="8"/>
-  <path d="M72 714h456" stroke="#5b1724" stroke-width="3"/>
-  <text x="103" y="766" fill="#211e1b" font-family="Georgia,serif" font-size="30" letter-spacing="10">READ THE STREETS</text>
-</svg>

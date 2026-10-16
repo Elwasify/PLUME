@@ -5,8 +5,6 @@ import BookCard from "../../components/BookCard/BookCard";
 import Newsletter from "../../components/Newsletter/Newsletter";
 import categories from "../../data/categories";
 import Hero from "../../components/Hero/Hero";
-import JournalCard from "../../components/JournalCard/JournalCard";
-import { journalArticles } from "../../data/journalArticles";
 import usePageTitle from "../../hooks/usePageTitle";
 
 const topics = [
@@ -96,32 +94,6 @@ export default function Home() {
             ))}
           </div>
         )}
-      </section>
-
-      <section aria-labelledby="from-journal-heading" className="border-b border-line bg-secondary/40">
-        <div className="mx-auto max-w-6xl px-6 py-14 md:py-20">
-          <div className="flex items-end justify-between gap-4">
-            <div>
-              <p className="text-[11px] uppercase tracking-[0.3em] text-gold-deep">
-                Le Journal
-              </p>
-              <h2 id="from-journal-heading" className="mt-3 text-3xl md:text-4xl">
-                From the <em className="text-burgundy">Journal</em>
-              </h2>
-            </div>
-            <Link
-              to="/journal"
-              className="shrink-0 text-xs uppercase tracking-[0.2em] text-burgundy underline decoration-gold underline-offset-8"
-            >
-              Explore the Journal
-            </Link>
-          </div>
-          <div className="mt-8 grid gap-5 md:grid-cols-3">
-            {journalArticles.slice(0, 3).map((article) => (
-              <JournalCard key={article.id} article={article} />
-            ))}
-          </div>
-        </div>
       </section>
 
       <section className="border-t border-line bg-secondary/40">
