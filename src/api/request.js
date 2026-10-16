@@ -45,9 +45,14 @@ function writeCache(url, value, ttl) {
 }
 
 function retryDelay(response, attempt) {
-  const retryAfter = Number(response.headers.get("Retry-After"));
+  const header = response.headers.get("Retry-After");
+  const retryAfter = Number(header);
   if (Number.isFinite(retryAfter) && retryAfter > 0) {
     return Math.min(retryAfter * 1000, 3000);
+  }
+  const retryAt = Date.parse(header || "");
+  if (Number.isFinite(retryAt)) {
+    return Math.min(Math.max(0, retryAt - Date.now()), 3000);
   }
   return 500 * (attempt + 1);
 }

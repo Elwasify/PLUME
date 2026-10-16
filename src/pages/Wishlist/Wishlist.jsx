@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Icon } from "@iconify/react";
 import { formatPrice } from "../../context/shopUtils";
@@ -6,7 +7,8 @@ import BookCover from "../../components/BookCover/BookCover";
 import usePageTitle from "../../hooks/usePageTitle";
 
 export default function Wishlist() {
-  const { wishlist, toggleWishlist, addToCart, cartQty } = useShop();
+  const { wishlist, toggleWishlist, moveToCart, cartQty } = useShop();
+  const [message, setMessage] = useState("");
   usePageTitle("Wishlist");
 
   return (
@@ -17,6 +19,9 @@ export default function Wishlist() {
       <h1 className="mt-3 text-4xl md:text-5xl">
         Your <em className="text-burgundy">wishlist</em>
       </h1>
+      <p role="status" aria-live="polite" className="mt-3 min-h-5 text-sm text-muted">
+        {message}
+      </p>
 
       {wishlist.length === 0 ? (
         <div className="mt-12 border border-line bg-white/50 px-6 py-16 text-center">
@@ -55,8 +60,11 @@ export default function Wishlist() {
                   </Link>
                   <button
                     type="button"
-                    onClick={() => toggleWishlist(b)}
-                    aria-label="Remove from wishlist"
+                    onClick={() => {
+                      toggleWishlist(b);
+                      setMessage(`${b.title} removed from your wishlist.`);
+                    }}
+                    aria-label={`Remove ${b.title} from wishlist`}
                     className="absolute right-2 top-2 flex h-9 w-9 items-center justify-center rounded-full bg-cream/90 text-burgundy transition hover:bg-white"
                   >
                     <Icon icon="lucide:x" className="h-4 w-4" />
@@ -84,14 +92,17 @@ export default function Wishlist() {
 
                   <button
                     type="button"
-                    onClick={() => addToCart(b)}
+                    onClick={() => {
+                      moveToCart(b);
+                      setMessage(`${b.title} moved to your cart.`);
+                    }}
                     className="mt-3 flex h-10 w-full items-center justify-center gap-2 border border-line text-[11px] uppercase tracking-[0.2em] transition hover:border-burgundy hover:text-burgundy"
                   >
                     <Icon
                       icon={qty > 0 ? "lucide:check" : "lucide:shopping-bag"}
                       className="h-3.5 w-3.5"
                     />
-                    {qty > 0 ? `In bag (${qty})` : "Add to bag"}
+                    Move to cart
                   </button>
                 </div>
               </article>

@@ -79,6 +79,7 @@ export default function Discover() {
   const [draft, setDraft] = useState(null);
   const [recent, setRecent] = useState(loadRecent);
   const [retry, setRetry] = useState(0);
+  const [authorRetry, setAuthorRetry] = useState(0);
   const [data, setData] = useState({
     key: "",
     books: [],
@@ -88,12 +89,13 @@ export default function Discover() {
     totalExact: false,
     error: false,
   });
-  const [authorsData, setAuthorsData] = useState({ key: "", list: [] });
+  const [authorsData, setAuthorsData] = useState({ key: "", list: [], error: false });
   const [more, setMore] = useState({ key: "", loading: false, error: false });
 
   const fullKey = JSON.stringify([q, category, sort, retry]);
   const value = draft ?? q;
   const authorTerm = q.trim();
+  const authorKey = JSON.stringify([authorTerm, authorRetry]);
   const wantsAuthors = authorTerm.length >= 2 && !category;
 
   const update = useCallback(
@@ -188,21 +190,23 @@ export default function Discover() {
     searchAuthors(authorTerm, ctrl.signal, 3)
       .then((list) => {
         if (!ctrl.signal.aborted) {
-          setAuthorsData({ key: authorTerm, list });
+          setAuthorsData({ key: authorKey, list, error: false });
         }
       })
       .catch((err) => {
         if (err.name === "AbortError") return;
-        setAuthorsData({ key: authorTerm, list: [] });
+        setAuthorsData({ key: authorKey, list: [], error: true });
       });
 
     return () => ctrl.abort();
-  }, [authorTerm, wantsAuthors]);
+  }, [authorKey, authorTerm, wantsAuthors]);
 
   const loading = data.key !== fullKey;
   const books = loading ? [] : sortBooks(data.books, sort);
-  const authors =
-    wantsAuthors && authorsData.key === authorTerm ? authorsData.list : [];
+  const authorsLoading = wantsAuthors && authorsData.key !== authorKey;
+  const authors = wantsAuthors && authorsData.key === authorKey ? authorsData.list : [];
+  const authorsError =
+    wantsAuthors && authorsData.key === authorKey && authorsData.error;
   const hasFilters = Boolean(q || category || sort);
 
   async function loadMore() {
@@ -390,6 +394,27 @@ export default function Discover() {
           )}
         </div>
       </div>
+
+      {authorsLoading && (
+        <p className="mt-10 text-sm text-muted" role="status" aria-live="polite">
+          Looking for author matches…
+        </p>
+      )}
+
+      {authorsError && (
+        <div className="mt-10 text-sm">
+          <p className="text-burgundy">
+            Author matches could not be loaded. You can still browse the book results.
+          </p>
+          <button
+            type="button"
+            onClick={() => setAuthorRetry((value) => value + 1)}
+            className="mt-3 border border-line px-4 py-2 text-xs uppercase tracking-[0.15em] transition hover:border-burgundy hover:text-burgundy"
+          >
+            Try author search again
+          </button>
+        </div>
+      )}
 
       {authors.length > 0 && (
         <section aria-labelledby="authors-heading" className="mt-12">

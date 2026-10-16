@@ -101,6 +101,21 @@ export function ShopProvider({ children }) {
     });
   };
 
+  const moveToCart = (book) => {
+    const item = toItem(book);
+    if (!item) return;
+    setCart((prev) => {
+      const found = prev.find((i) => i.id === item.id);
+      if (found) {
+        return prev.map((i) =>
+          i.id === item.id ? { ...i, qty: clampQty(i.qty + 1) } : i,
+        );
+      }
+      return [...prev, { ...item, qty: 1 }];
+    });
+    setWishlist((prev) => prev.filter((i) => i.id !== item.id));
+  };
+
   const removeFromCart = (id) =>
     setCart((prev) => prev.filter((i) => i.id !== id));
 
@@ -129,6 +144,7 @@ export function ShopProvider({ children }) {
     cartTotal:
       Math.round(cart.reduce((s, i) => s + i.price * i.qty, 0) * 100) / 100,
     addToCart,
+    moveToCart,
     removeFromCart,
     setQty,
     clearCart,

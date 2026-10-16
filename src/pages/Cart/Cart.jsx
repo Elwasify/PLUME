@@ -10,6 +10,7 @@ export default function Cart() {
   const { cart, cartCount, cartTotal, setQty, removeFromCart, clearCart } =
     useShop();
   const [demoDone, setDemoDone] = useState(false);
+  const [message, setMessage] = useState("");
   usePageTitle("Your bag");
 
   const hasDemoPrices = cart.some((i) => i.demo);
@@ -22,6 +23,9 @@ export default function Cart() {
       <h1 className="mt-3 text-4xl md:text-5xl">
         Your <em className="text-burgundy">bag</em>
       </h1>
+      <p role="status" aria-live="polite" className="mt-3 min-h-5 text-sm text-muted">
+        {message}
+      </p>
 
       {cart.length === 0 ? (
         <div className="mt-12 border border-line bg-white/50 px-6 py-16 text-center">
@@ -73,7 +77,11 @@ export default function Cart() {
                     </div>
                     <button
                       type="button"
-                      onClick={() => removeFromCart(i.id)}
+                      onClick={() => {
+                        removeFromCart(i.id);
+                        setMessage(`${i.title} removed from your cart.`);
+                        setDemoDone(false);
+                      }}
                       aria-label={`Remove ${i.title}`}
                       className="shrink-0 text-muted transition hover:text-burgundy"
                     >
@@ -108,6 +116,9 @@ export default function Cart() {
 
                     <p className="font-['Inter',sans-serif] text-lg font-light text-burgundy">
                       {formatPrice(i.price * i.qty)}
+                      {i.demo && (
+                        <span className="ml-2 text-[10px] text-muted">demo price</span>
+                      )}
                     </p>
                   </div>
                 </div>
@@ -133,10 +144,13 @@ export default function Cart() {
 
             {hasDemoPrices && (
               <p className="mt-4 text-xs leading-relaxed text-muted">
-                Prices marked “demo” are placeholders, not official publisher or
-                retailer prices.
+                Prices marked “demo” are placeholders, not verified publisher
+                or retailer prices.
               </p>
             )}
+            <p className="mt-4 text-xs leading-relaxed text-muted">
+              Shipping and taxes are not calculated.
+            </p>
 
             <button
               type="button"
@@ -158,11 +172,19 @@ export default function Cart() {
               </div>
             )}
 
+            <Link
+              to="/discover"
+              className="mt-4 block w-full border border-line py-3.5 text-center text-xs uppercase tracking-[0.2em] transition hover:border-burgundy hover:text-burgundy"
+            >
+              Continue shopping
+            </Link>
+
             <button
               type="button"
               onClick={() => {
                 clearCart();
                 setDemoDone(false);
+                setMessage("Your cart has been emptied.");
               }}
               className="mt-4 w-full text-xs uppercase tracking-[0.2em] text-muted transition hover:text-burgundy"
             >

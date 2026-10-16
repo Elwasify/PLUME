@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Icon } from "@iconify/react";
 import { formatPrice, toItem } from "../../context/shopUtils";
@@ -6,6 +7,7 @@ import BookCover from "../BookCover/BookCover";
 
 export default function BookCard({ book }) {
   const { addToCart, toggleWishlist, inWishlist, cartQty } = useShop();
+  const [feedback, setFeedback] = useState("");
   const info = book.volumeInfo || {};
   const cover = info.imageLinks?.thumbnail?.replace("http://", "https://");
   const authors = info.authors || [];
@@ -32,7 +34,14 @@ export default function BookCard({ book }) {
 
         <button
           type="button"
-          onClick={() => toggleWishlist(book)}
+          onClick={() => {
+            toggleWishlist(book);
+            setFeedback(
+              liked
+                ? `${info.title} removed from your wishlist.`
+                : `${info.title} saved to your wishlist.`,
+            );
+          }}
           aria-label={liked ? "Remove from wishlist" : "Add to wishlist"}
           aria-pressed={liked}
           className="absolute right-2 top-2 flex h-9 w-9 items-center justify-center rounded-full bg-cream/90 text-burgundy transition hover:bg-white"
@@ -87,7 +96,10 @@ export default function BookCard({ book }) {
 
         <button
           type="button"
-          onClick={() => addToCart(book)}
+          onClick={() => {
+            addToCart(book);
+            setFeedback(`${info.title} added to your cart.`);
+          }}
           className="mt-3 flex h-10 w-full items-center justify-center gap-2 border border-line text-[11px] uppercase tracking-[0.2em] transition hover:border-burgundy hover:text-burgundy"
         >
           <Icon
@@ -96,6 +108,9 @@ export default function BookCard({ book }) {
           />
           {qty > 0 ? `In bag (${qty})` : "Add to bag"}
         </button>
+        <p className="sr-only" role="status" aria-live="polite">
+          {feedback}
+        </p>
       </div>
     </article>
   );
