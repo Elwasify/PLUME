@@ -4,7 +4,7 @@ export const journalArticles = [
     title: "Kafka and the Shape of the Outsider",
     subtitle: "What happens when the world keeps its rules and we can no longer read them.",
     category: "Authors",
-    author: "Le Journal Editors",
+    author: "Plume Editors",
     publishedAt: "2026-10-02",
     excerpt:
       "In The Metamorphosis, the strange event is only the beginning. Kafka turns a family bedroom into a precise study of shame, duty and belonging.",
@@ -51,7 +51,7 @@ export const journalArticles = [
     title: "Dostoevsky’s White Nights and the Tenderness of a Minute",
     subtitle: "A brief meeting becomes a whole inner world in this early Petersburg story.",
     category: "Authors",
-    author: "Le Journal Editors",
+    author: "Plume Editors",
     publishedAt: "2026-09-18",
     excerpt:
       "White Nights follows a solitary dreamer through a few evenings when attention itself feels like an event. Its tenderness comes with a clear sense of time passing.",
@@ -98,7 +98,7 @@ export const journalArticles = [
     title: "Reading The Stranger Without Looking Away",
     subtitle: "Camus places a quiet, difficult narrator inside the expectations of his society.",
     category: "Philosophy",
-    author: "Le Journal Editors",
+    author: "Plume Editors",
     publishedAt: "2026-08-26",
     excerpt:
       "The Stranger can be read as a novel about judgment: what a community notices, what it expects people to feel, and what it cannot accept as silence.",
@@ -145,11 +145,11 @@ export const journalArticles = [
     title: "Les Misérables: A City Made of Memory",
     subtitle: "In Hugo’s novel, streets and rooms carry the weight of choices made across years.",
     category: "Classics",
-    author: "Le Journal Editors",
+    author: "Plume Editors",
     publishedAt: "2026-07-11",
     excerpt:
-      "Paris is more than a setting in Les Misérables. The novel turns the city into a map of institutions, private histories and chances to begin again.",
-    tags: ["Hugo", "Paris", "memory"],
+      "The setting is more than a backdrop in Les Misérables. The novel turns the city into a map of institutions, private histories and chances to begin again.",
+    tags: ["Hugo", "memory"],
     bookIds: ["OL1063588W"],
     longForm: true,
     sections: [
@@ -157,7 +157,7 @@ export const journalArticles = [
         id: "the-city-as-a-map",
         title: "The city as a map",
         paragraphs: [
-          "In Les Misérables, Paris is built from contrasts: public streets and private rooms, bright boulevards and hidden corners, places of work and places of refuge. The city helps move the story, but it also gives social life a shape readers can picture. A change of neighborhood can change what seems possible to a character.",
+          "In Les Misérables, the city is built from contrasts: public streets and private rooms, bright boulevards and hidden corners, places of work and places of refuge. The setting helps move the story, but it also gives social life a shape readers can picture. A change of neighborhood can change what seems possible to a character.",
           "Hugo’s attention to place makes the novel expansive without making it weightless. A street is not only scenery. It can hold a memory, expose a difference in power or bring people into the same space who would otherwise remain apart.",
         ],
       },
@@ -192,7 +192,7 @@ export const journalArticles = [
     title: "Why the Classics Still Speak",
     subtitle: "An old book stays alive when each generation brings a new question to it.",
     category: "Classics",
-    author: "Le Journal Editors",
+    author: "Plume Editors",
     publishedAt: "2026-06-20",
     excerpt:
       "A classic is not a book that has stopped changing. Its language may be old, yet the questions inside it keep meeting readers in the present.",
@@ -222,7 +222,7 @@ export const journalArticles = [
     title: "Building a Reading Habit That Lasts",
     subtitle: "Small, repeatable moments make room for attention without turning reading into a test.",
     category: "Reading Life",
-    author: "Le Journal Editors",
+    author: "Plume Editors",
     publishedAt: "2026-05-29",
     excerpt:
       "A useful reading routine is flexible enough for real life. Begin with a book you want to return to, then make the next page easy to reach.",
@@ -248,15 +248,15 @@ export const journalArticles = [
     ],
   },
   {
-    id: "literary-paris-walk",
-    title: "A Literary Walk Through Paris",
+    id: "literary-walk-through-fiction",
+    title: "A Literary Walk Through Fiction",
     subtitle: "Read a city through its doorways, routes and the lives a street can hold.",
     category: "Places",
-    author: "Le Journal Editors",
+    author: "Plume Editors",
     publishedAt: "2026-04-17",
     excerpt:
       "A literary city is made from more than landmarks. It is built from the paths characters take and the histories a reader carries into them.",
-    tags: ["Paris", "places", "Hugo"],
+    tags: ["places", "Hugo"],
     bookIds: ["OL1063588W", "OL1230613W"],
     sections: [
       {
@@ -264,7 +264,7 @@ export const journalArticles = [
         title: "Walk with a book",
         paragraphs: [
           "A novel can turn a map into a sequence of human encounters. When a story gives a street, a room or a bridge an emotional history, the reader begins to see a place through more than its outline. The city becomes a way of arranging memory.",
-          "Les Misérables offers a broad portrait of Paris, one attentive to the spaces where public history meets private need. The Stranger gives a different relation to place, shaped by the narrator’s physical attention to the day and his distance from the expectations around him.",
+          "Les Misérables offers a broad portrait of urban life, attentive to the spaces where public history meets private need. The Stranger gives a different relation to place, shaped by the narrator’s physical attention to the day and his distance from the expectations around him.",
         ],
       },
       {
@@ -282,7 +282,7 @@ export const journalArticles = [
     title: "Memory Is a Story We Keep Revising",
     subtitle: "Fiction shows how a remembered event changes when it is retold to someone else.",
     category: "Reading Life",
-    author: "Le Journal Editors",
+    author: "Plume Editors",
     publishedAt: "2026-03-08",
     excerpt:
       "Remembering is not simply replaying. The stories we tell about the past change as new knowledge, distance and attention alter what we can see.",
@@ -312,7 +312,7 @@ export const journalArticles = [
     title: "The Quiet Pleasure of Rereading",
     subtitle: "Return to a familiar novel and notice what your first reading could not.",
     category: "Reading Life",
-    author: "Le Journal Editors",
+    author: "Plume Editors",
     publishedAt: "2026-02-14",
     excerpt:
       "Rereading turns the reader into a companion to their earlier self. The pages stay still while our attention changes around them.",
@@ -324,7 +324,7 @@ export const journalArticles = [
         title: "The book and the reader",
         paragraphs: [
           "On a first reading, we often follow the main line: who is speaking, what happens and where the story might go. A return visit makes room for different questions. A gesture that seemed minor may now feel deliberate; a character we disliked may become easier to understand without becoming easier to excuse.",
-          "Pride and Prejudice rewards attention to the way people revise their judgments of one another. The Stranger can feel different when we know where its narrator’s plain manner will lead. Familiarity changes the reader’s pace, not the printed page.",
+          "Pride and Prejudice rewards attention to the way people revise their judgments of one another. Wuthering Heights can feel different when we know where its story will lead. Familiarity changes the reader’s pace, not the printed page.",
         ],
       },
       {
@@ -342,7 +342,7 @@ export const journalArticles = [
     title: "What a Novel Leaves Open",
     subtitle: "An ending can close a plot while leaving its moral questions in the reader’s hands.",
     category: "Philosophy",
-    author: "Le Journal Editors",
+    author: "Plume Editors",
     publishedAt: "2026-01-22",
     excerpt:
       "Some of the most memorable endings do not settle every argument. They give a story a shape and let its unfinished questions travel with us.",

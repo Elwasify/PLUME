@@ -1,8 +1,9 @@
 import { requestJson } from "./request";
+import { isLatinText, latinNames } from "../utils/text";
 
 const BASE = "https://openlibrary.org";
 const LIST_FIELDS =
-  "key,title,author_name,cover_i,isbn,first_publish_year,subject,edition_count";
+  "key,title,author_name,cover_i,isbn,first_publish_year,subject,edition_count,language";
 const LANGS = { en: "eng", fr: "fre", ar: "ara" };
 
 const coverUrl = (id, size = "M") =>
@@ -24,11 +25,15 @@ function toBook(doc) {
   const isbns = Array.isArray(doc.isbn) ? doc.isbn : [];
   const cover = coverUrl(doc.cover_i) || isbnCoverUrl(isbns[0]);
   const year = Number(doc.first_publish_year);
-  const authors = Array.isArray(doc.author_name)
-    ? doc.author_name.filter(
-        (author) => typeof author === "string" && author.trim(),
-      )
-    : [];
+  const title =
+    typeof doc.title === "string" && doc.title.trim()
+      ? doc.title.trim()
+      : "";
+  if (!isLatinText(title)) return null;
+  const authors = latinNames(
+    Array.isArray(doc.author_name) ? doc.author_name : [],
+  );
+  const languages = Array.isArray(doc.language) ? doc.language : [];
   const subjects = Array.isArray(doc.subject)
     ? doc.subject.filter((subject) => typeof subject === "string" && subject.trim())
     : [];
@@ -36,11 +41,9 @@ function toBook(doc) {
   return {
     id: workId.toUpperCase(),
     volumeInfo: {
-      title:
-        typeof doc.title === "string" && doc.title.trim()
-          ? doc.title.trim()
-          : "Untitled",
+      title,
       authors,
+      languages,
       publishedDate:
         Number.isInteger(year) && year > 0 ? String(year) : undefined,
       categories: subjects.slice(0, 5),
@@ -174,7 +177,7 @@ async function getAuthors(work, signal) {
     }),
   );
 
-  return results.filter(Boolean);
+  return latinNames(results.filter(Boolean));
 }
 
 async function getEditions(workId, signal) {
@@ -207,6 +210,13 @@ export async function getBook(id, signal) {
       item.publish_date ||
       item.covers?.length,
   );
+  const englishEditionTitle = editions.find(
+    (item) => typeof item.title === "string" && isLatinText(item.title),
+  )?.title;
+  const title = isLatinText(work.title)
+    ? work.title.trim()
+    : englishEditionTitle?.trim();
+  if (!title) return null;
   const description =
     typeof work.description === "string"
       ? work.description
@@ -219,7 +229,7 @@ export async function getBook(id, signal) {
   return {
     id: workId,
     volumeInfo: {
-      title: typeof work.title === "string" && work.title.trim() ? work.title : "Untitled",
+      title,
       subtitle: work.subtitle,
       authors,
       description,

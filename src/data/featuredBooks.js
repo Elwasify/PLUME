@@ -11,7 +11,7 @@ export const featuredBooks = [
     title: "Pride and Prejudice",
     author: "Jane Austen",
     year: "1813",
-    bio: "1775 — 1817 · Hampshire",
+    bio: "1775–1817 · Hampshire",
     quote: "I declare after all there is no enjoyment like reading!",
   },
   {
@@ -20,7 +20,7 @@ export const featuredBooks = [
     title: "The Stranger",
     author: "Albert Camus",
     year: "1942",
-    bio: "1913 — 1960 · Mondovi",
+    bio: "1913–1960 · Mondovi",
     quote: "Mother died today.",
   },
   {
@@ -29,7 +29,7 @@ export const featuredBooks = [
     title: "White Nights",
     author: "Fyodor Dostoevsky",
     year: "1848",
-    bio: "1821 — 1881 · Moscow",
+    bio: "1821–1881 · Moscow",
     quote: "A whole minute of happiness! Is that too little for a man’s life?",
   },
   {
@@ -38,7 +38,7 @@ export const featuredBooks = [
     title: "The Metamorphosis",
     author: "Franz Kafka",
     year: "1915",
-    bio: "1883 — 1924 · Prague",
+    bio: "1883–1924 · Prague",
     quote: "He found himself transformed in his bed into a horrible vermin.",
   },
   {
@@ -47,7 +47,7 @@ export const featuredBooks = [
     title: "Les Misérables",
     author: "Victor Hugo",
     year: "1862",
-    bio: "1802 — 1885 · Besançon",
+    bio: "1802–1885 · Besançon",
     quote: "Hope is the word which God has written on the brow of every man.",
   },
 ].map((book) => ({

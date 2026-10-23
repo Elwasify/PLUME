@@ -1,4 +1,5 @@
 import { requestJson } from "./request";
+import { isLatinText } from "../utils/text";
 
 const WRITER_RE =
   /writer|author|novelist|poet|playwright|dramatist|essayist|philosopher|journalist|historian|critic|short story/i;
@@ -33,6 +34,7 @@ export async function searchAuthors(q = "", signal, limit = 3) {
       if (
         !page ||
         typeof page.title !== "string" ||
+        !isLatinText(page.title) ||
         !Number.isFinite(Number(page.pageid))
       ) {
         return false;
