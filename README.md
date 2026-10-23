@@ -1,6 +1,6 @@
 # PLUME
 
-PLUME is a French-themed literary library for discovering books and authors, built as a frontend-only graduation project at ITI. There is no backend: all data comes from public APIs, and the wishlist and cart live in the browser.
+PLUME is a French-themed literary library for discovering books and authors, built as a frontend-only graduation project at ITI. There is no backend: all data comes from public APIs, and the wishlist and bag live in the browser.
 
 ## Screenshots
 
@@ -12,9 +12,9 @@ PLUME is a French-themed literary library for discovering books and authors, bui
 | --- | --- |
 | ![Book details page](docs/screenshots/book.png) | ![Categories page](docs/screenshots/categories.png) |
 
-| Cart |
+| Bag |
 | --- |
-| ![Cart page](docs/screenshots/cart.png) |
+| ![Bag page](docs/screenshots/cart.png) |
 
 ## Features
 
@@ -23,7 +23,7 @@ PLUME is a French-themed literary library for discovering books and authors, bui
 - Categories page to browse books by subject.
 - Book details page for each book.
 - Author pages with a biography summary from Wikipedia and a list of the author's books.
-- Wishlist and cart, saved in the browser with `localStorage`.
+- Wishlist and bag, saved in the browser with `localStorage`.
 - About page and a custom 404 page.
 
 ## Demo notice
@@ -31,7 +31,7 @@ PLUME is a French-themed literary library for discovering books and authors, bui
 PLUME is not a real store.
 
 - Prices are demo prices generated deterministically in the app. They are not real prices.
-- Checkout is a demo. It does not place orders or take payment.
+- The payment page is a preview. It does not send billing details, place orders, or take payment; Paymob is not connected yet.
 - The newsletter form is a demo. It does not send or store any email.
 
 ## Tech stack
