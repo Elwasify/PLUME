@@ -9,6 +9,7 @@ import Categories from "./pages/Categories/Categories";
 import About from "./pages/About/About";
 import Wishlist from "./pages/Wishlist/Wishlist";
 import Cart from "./pages/Cart/Cart";
+import Payment from "./pages/Payment/Payment";
 import BookDetails from "./pages/BookDetails/BookDetails";
 import Author from "./pages/Author/Author";
 import NotFound from "./pages/NotFound/NotFound";
@@ -26,6 +27,7 @@ export default function App() {
           <Route path="/about" element={<About />} />
           <Route path="/wishlist" element={<Wishlist />} />
           <Route path="/cart" element={<Cart />} />
+          <Route path="/payment" element={<Payment />} />
           <Route path="/books/:id" element={<BookDetails />} />
           <Route path="/author/:name" element={<Author />} />
           <Route path="*" element={<NotFound />} />
