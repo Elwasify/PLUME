@@ -54,7 +54,7 @@ export default function Newsletter() {
         <p aria-live="polite" className="mt-4 min-h-6 text-sm">
           {status === "success" && (
             <span className="text-gold-deep">
-              Thank you. This is a demonstration, so no email was saved.
+              Thank you for your interest.
             </span>
           )}
           {status === "error" && (

@@ -49,10 +49,10 @@ export default function Footer() {
 
   const message =
     status === "done"
-      ? "Thanks! This is a demo, so nothing was actually subscribed."
+      ? "Thanks for your interest."
       : status === "error"
         ? "Please enter a valid email address."
-        : "Demo only. Your email is not stored or sent.";
+        : "";
 
   return (
     <footer className="bg-ink text-cream">
@@ -61,11 +61,10 @@ export default function Footer() {
           <div className="max-w-sm">
             <Logo light />
             <h2 className="mt-8 font-serif text-2xl leading-tight">
-              Stay <em className="text-gold">between</em> the pages
+              New arrivals and reading lists
             </h2>
             <p className="mt-3 text-sm leading-relaxed text-cream/60">
-              New arrivals, author spotlights and reading lists, straight to
-              your inbox.
+              Discover what is new on our shelves and find your next read.
             </p>
 
             <form onSubmit={onSubmit} noValidate className="mt-6">

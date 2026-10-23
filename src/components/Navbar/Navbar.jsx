@@ -37,10 +37,8 @@ export default function Navbar() {
     <header className="relative z-40 bg-cream md:sticky md:top-0">
       <div className="border-b border-line">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-2 text-[10px] uppercase text-taupe md:px-10">
-          <span>Librairie Parisienne — A literary world</span>
-          <span className="hidden sm:block">
-            Paris d’esprit · Made for readers
-          </span>
+          <span>Librairie Plume — A literary world</span>
+          <span className="hidden sm:block">Lire · Rêver · Voyager</span>
         </div>
       </div>
 
@@ -91,11 +89,11 @@ export default function Navbar() {
 
           <Link
             to="/cart"
-            aria-label={`Cart, ${cartCount} items`}
+            aria-label={`Bag, ${cartCount} items`}
             className="relative flex items-center gap-2 rounded-sm bg-burgundy px-3 py-2 text-cream"
           >
             <Icon icon="lucide:shopping-bag" className="h-4 w-4" />
-            <span className="hidden text-xs sm:block">Cart</span>
+            <span className="hidden text-xs sm:block">Bag</span>
             {cartCount > 0 && (
               <span className="absolute -right-2 -top-2 flex h-4 min-w-4 items-center justify-center rounded-full bg-gold px-1 font-['Inter',sans-serif] text-[10px] text-ink">
                 {cartCount}

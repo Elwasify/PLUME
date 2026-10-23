@@ -17,8 +17,8 @@ const perks = [
   },
   {
     icon: "lucide:shopping-bag",
-    title: "Easy cart",
-    text: "Demo checkout",
+    title: "Easy bag",
+    text: "Ready to checkout",
   },
 ];
 
@@ -30,17 +30,12 @@ export default function Hero() {
   const current = featuredBooks[index];
   const prevSlide = featuredBooks[(index - 1 + total) % total];
   const nextSlide = featuredBooks[(index + 1) % total];
-  const { price, demo } = toItem(current.catalogBook);
+  const { price } = toItem(current.catalogBook);
 
   return (
     <section className="grid border-b border-line lg:grid-cols-2">
-      <div className="flex flex-col justify-center px-6 py-12 md:px-12 lg:py-24">
-        <p className="flex items-center gap-4 text-[11px] uppercase tracking-[0.3em] text-burgundy">
-          <span className="h-px w-12 bg-gold" />
-          N° 27 — The Literary Review
-        </p>
-
-        <h1 className="mt-8 text-5xl leading-[1.05] md:text-7xl">
+      <div className="flex flex-col justify-center px-4 py-10 sm:px-6 sm:py-12 md:px-12 lg:py-24">
+        <h1 className="mt-6 text-4xl leading-[1.05] sm:mt-8 sm:text-5xl md:text-7xl">
           Find Yourself <em>Between</em> the Pages.
         </h1>
 
@@ -49,24 +44,24 @@ export default function Hero() {
           stories chosen for curious minds.
         </p>
 
-        <div className="mt-10 flex flex-wrap items-center gap-4">
+        <div className="mt-8 flex flex-wrap items-center gap-3 sm:mt-10 sm:gap-4">
           <Link
             to="/discover"
-            className="flex items-center gap-3 rounded-md bg-burgundy px-7 py-4 text-sm text-cream shadow-lg shadow-burgundy/20 transition hover:bg-burgundy/90"
+            className="flex items-center gap-3 rounded-md bg-burgundy px-5 py-4 text-sm text-cream shadow-lg shadow-burgundy/20 transition hover:bg-burgundy/90 sm:px-7"
           >
             Explore the Collection
             <Icon icon="lucide:arrow-right" className="h-4 w-4" />
           </Link>
           <Link
             to="/about"
-            className="flex items-center gap-3 rounded-md border border-line bg-white px-7 py-4 text-sm transition hover:border-burgundy hover:text-burgundy"
+            className="flex items-center gap-3 rounded-md border border-line bg-white px-5 py-4 text-sm transition hover:border-burgundy hover:text-burgundy sm:px-7"
           >
             <Icon icon="lucide:book-open" className="h-4 w-4" />
             Our Literary World
           </Link>
         </div>
 
-        <div className="mt-12 grid grid-cols-3 divide-x divide-line border-y border-line">
+        <div className="mt-10 grid grid-cols-3 divide-x divide-line border-y border-line sm:mt-12">
           {perks.map((perk) => (
             <div key={perk.title} className="px-2 py-6 text-center sm:px-6">
               <Icon
@@ -84,13 +79,13 @@ export default function Hero() {
         </div>
       </div>
 
-      <div className="p-4 md:p-8">
-        <div className="mx-auto flex h-full max-w-xl flex-col rounded-3xl bg-ink px-6 py-10 text-center text-cream shadow-2xl">
+      <div className="p-3 sm:p-4 md:p-8">
+        <div className="mx-auto flex h-full max-w-xl flex-col rounded-3xl bg-ink px-4 py-8 text-center text-cream shadow-2xl sm:px-6 sm:py-10">
           <p className="text-[11px] uppercase tracking-[0.35em] text-gold">
             The Plume Selection
           </p>
 
-          <div className="relative mt-10 flex h-80 items-center justify-center">
+          <div className="relative mt-8 flex h-72 items-center justify-center sm:mt-10 sm:h-80">
             <img
               src={prevSlide.image}
               alt=""
@@ -107,7 +102,7 @@ export default function Hero() {
               key={index}
               src={current.image}
               alt={`Cover of ${current.title}`}
-              className="relative z-10 h-80 w-56 rounded-sm object-cover shadow-2xl"
+              className="relative z-10 h-72 w-48 rounded-sm object-cover shadow-2xl sm:h-80 sm:w-56"
             />
 
             <button
@@ -128,20 +123,17 @@ export default function Hero() {
             </button>
           </div>
 
-          <h2 className="mt-10 font-serif text-3xl md:text-4xl">
+          <h2 className="mt-8 font-serif text-2xl sm:mt-10 sm:text-3xl md:text-4xl">
             {current.title}
           </h2>
           <p className="mt-3 text-xs uppercase tracking-[0.3em] text-gold">
             {current.author} · {current.year}
           </p>
-          <p className="mt-3 text-sm text-cream/70">{current.bio}</p>
-          <p className="mt-5 font-['Inter',sans-serif] text-3xl font-light tracking-tight text-gold">
+          {current.bio && (
+            <p className="mt-3 text-sm text-cream/70">{current.bio}</p>
+          )}
+          <p className="mt-5 font-['Inter',sans-serif] text-2xl font-light tracking-tight text-gold sm:text-3xl">
             {formatPrice(price)}
-            {demo && (
-              <span className="ml-2 text-xs tracking-normal text-cream/60">
-                demo
-              </span>
-            )}
           </p>
 
           <Link
@@ -166,10 +158,16 @@ export default function Hero() {
             ))}
           </div>
 
-          <p className="mx-auto mt-8 flex max-w-sm items-center justify-center gap-3 font-serif text-sm italic text-cream/80">
-            <Icon icon="lucide:quote" className="h-4 w-4 shrink-0 text-gold" />
-            {current.quote}
-          </p>
+          {current.quote && (
+            <p className="mx-auto mt-8 flex max-w-sm items-center justify-center gap-3 font-serif text-xs italic text-cream/80 sm:text-sm">
+              <Icon icon="lucide:quote" className="h-4 w-4 shrink-0 text-gold" />
+              <span>
+                {current.quote}
+                <br />
+                — {current.author}, {current.title}
+              </span>
+            </p>
+            )}
         </div>
       </div>
     </section>
