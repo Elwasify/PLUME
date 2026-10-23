@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import { Icon } from "@iconify/react";
 import BookCard from "../../components/BookCard/BookCard";
 import useBook from "../../hooks/useBook";
@@ -10,6 +10,7 @@ import BookCover from "../../components/BookCover/BookCover";
 import BookJournal from "../../components/BookJournal/BookJournal";
 import { journalArticles } from "../../data/journalArticles";
 import usePageTitle from "../../hooks/usePageTitle";
+import { getWikipediaBookInfo } from "../../api/wikipediaBooks";
 
 function cleanDescription(text) {
   if (!text) return "";
@@ -36,18 +37,59 @@ function relatedOptions(book) {
 export default function BookDetails() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { book, loading, error, retry } = useBook(id);
+  const location = useLocation();
+  const { book: loadedBook, loading, error, retry } = useBook(id);
   const { addToCart, toggleWishlist, inWishlist, cartQty } = useShop();
   const [rel, setRel] = useState({ id: "", list: [] });
+  const [wikiRes, setWikiRes] = useState({ id: "", data: null });
   const [actionMessage, setActionMessage] = useState("");
-  usePageTitle(book?.volumeInfo?.title || "Book details");
+  const routeBook =
+    location.state?.book?.id === id ? location.state.book : null;
+  const sourceBook = loadedBook || routeBook;
+
+  useEffect(() => {
+    const info = sourceBook?.volumeInfo || {};
+    if (!sourceBook || (info.description && info.imageLinks?.thumbnail)) {
+      return undefined;
+    }
+    const controller = new AbortController();
+
+    getWikipediaBookInfo(info.title, info.authors?.[0], controller.signal)
+      .then((data) => {
+        if (!controller.signal.aborted) setWikiRes({ id, data });
+      })
+      .catch((requestError) => {
+        if (requestError.name !== "AbortError") {
+          console.warn(`Unable to load Wikipedia details for ${info.title}:`, requestError);
+        }
+      });
+
+    return () => controller.abort();
+  }, [id, sourceBook]);
+
+  const wikiInfo = wikiRes.id === id ? wikiRes.data : null;
+  const displayBook =
+    sourceBook && wikiInfo
+      ? {
+          ...sourceBook,
+          volumeInfo: {
+            ...sourceBook.volumeInfo,
+            description:
+              sourceBook.volumeInfo.description || wikiInfo.extract,
+            imageLinks: sourceBook.volumeInfo.imageLinks || {
+              thumbnail: wikiInfo.thumbnail?.source,
+            },
+          },
+        }
+      : sourceBook;
+  usePageTitle(displayBook?.volumeInfo?.title || "Book details");
 
   useEffect(() => {
     window.scrollTo(0, 0);
   }, [id]);
 
   useEffect(() => {
-    const options = relatedOptions(book);
+    const options = relatedOptions(sourceBook);
     if (!options) return;
     const ctrl = new AbortController();
 
@@ -55,16 +97,17 @@ export default function BookDetails() {
       .then((list) => {
         if (ctrl.signal.aborted) return;
         setRel({
-          id: book.id,
-          list: list.filter((b) => b.id !== book.id).slice(0, 4),
+          id: sourceBook.id,
+          list: list.filter((b) => b.id !== sourceBook.id).slice(0, 4),
         });
       })
       .catch((e) => {
-        if (e.name !== "AbortError") setRel({ id: book.id, list: [] });
+        if (e.name !== "AbortError")
+          setRel({ id: sourceBook.id, list: [] });
       });
 
     return () => ctrl.abort();
-  }, [book]);
+  }, [sourceBook]);
 
   const goBack = () => {
     if (window.history.length > 1) navigate(-1);
@@ -99,7 +142,7 @@ export default function BookDetails() {
     );
   }
 
-  if (error || !book) {
+  if (error || !sourceBook) {
     return (
       <section className="mx-auto max-w-3xl px-6 py-20 text-center">
         <p className="text-[11px] uppercase tracking-[0.3em] text-gold-deep">
@@ -128,13 +171,14 @@ export default function BookDetails() {
     );
   }
 
+  const book = displayBook;
   const info = book.volumeInfo || {};
   const cover = info.imageLinks?.thumbnail;
   const authors = info.authors || [];
   const paragraphs = cleanDescription(info.description)
     .split(/\n{2,}/)
     .filter(Boolean);
-  const { price, demo } = toItem(book);
+  const { price } = toItem(book);
   const liked = inWishlist(book.id);
   const qty = cartQty(book.id);
   const canRelate = Boolean(relatedOptions(book));
@@ -146,11 +190,38 @@ export default function BookDetails() {
   const details = [
     { label: "Publisher in this edition", value: info.publisher },
     {
-      label: info.publicationFromEdition ? "Edition publication date" : "First publication",
+      label: info.publicationFromEdition ? "Edition published" : "First publication",
       value: info.publishedDate,
     },
     { label: "Pages in this edition", value: info.pageCount },
   ].filter((d) => d.value);
+  const preferredCategories = [
+    "Fiction",
+    "Romance",
+    "Fantasy",
+    "Mystery",
+    "Science",
+    "History",
+    "Philosophy",
+    "Business",
+    "Technology",
+    "Historical",
+  ];
+  const categoryParts = (Array.isArray(info.categories) ? info.categories : [])
+    .flatMap((category) =>
+      typeof category === "string"
+        ? category.split(",").map((part) => part.trim())
+        : [],
+    )
+    .filter((category) => category && category.length <= 30 && !/[()]/.test(category));
+  const uniqueCategories = [...new Set(categoryParts)];
+  const categories = uniqueCategories
+    .sort((a, b) => {
+      const aIndex = preferredCategories.indexOf(a);
+      const bIndex = preferredCategories.indexOf(b);
+      return (aIndex === -1 ? Infinity : aIndex) - (bIndex === -1 ? Infinity : bIndex);
+    })
+    .slice(0, 3);
 
   return (
     <div className="mx-auto max-w-6xl px-6 py-12 md:py-20">
@@ -167,15 +238,15 @@ export default function BookDetails() {
         </div>
 
         <div>
-          {info.categories?.length > 0 && (
+          {categories.length > 0 && (
             <div className="flex flex-wrap gap-2">
-              {info.categories.slice(0, 3).map((c) => (
+              {categories.map((category) => (
                 <Link
-                  key={c}
-                  to={`/discover?category=${encodeURIComponent(c)}`}
+                  key={category}
+                  to={`/discover?category=${encodeURIComponent(category)}`}
                   className="border border-line px-3 py-1 text-[10px] uppercase tracking-[0.2em] text-gold-deep transition hover:border-burgundy hover:text-burgundy"
                 >
-                  {c}
+                  {category}
                 </Link>
               ))}
             </div>
@@ -213,19 +284,17 @@ export default function BookDetails() {
 
           <p className="mt-6 font-['Inter',sans-serif] text-3xl font-light tracking-tight text-burgundy">
             {formatPrice(price)}
-            {demo && (
-              <span className="ml-2 text-xs tracking-normal text-muted">
-                demo price
-              </span>
-            )}
           </p>
 
           <div className="mt-6 flex flex-wrap gap-3">
             <button
               type="button"
               onClick={() => {
-                addToCart(book);
-                setActionMessage(`${info.title} added to your cart.`);
+                if (qty > 0) {
+                  navigate("/cart");
+                  return;
+                }
+                if (addToCart(book)) setActionMessage("Added to bag");
               }}
               className="flex items-center justify-center gap-2 bg-burgundy px-7 py-3.5 text-xs uppercase tracking-[0.2em] text-cream transition hover:bg-burgundy/90"
             >
@@ -233,7 +302,7 @@ export default function BookDetails() {
                 icon={qty > 0 ? "lucide:check" : "lucide:shopping-bag"}
                 className="h-4 w-4"
               />
-              {qty > 0 ? `In bag (${qty})` : "Add to bag"}
+              {qty > 0 ? "In bag" : "Add to bag"}
             </button>
             <button
               type="button"
@@ -290,11 +359,6 @@ export default function BookDetails() {
                   </div>
                 ))}
               </dl>
-              {info.editionDetailsAvailable && (
-                <p className="mt-3 text-xs leading-relaxed text-muted">
-                  Edition details are drawn from an available Open Library record and may vary between editions.
-                </p>
-              )}
             </>
           )}
         </div>

@@ -51,7 +51,7 @@ export default function About() {
     <div>
       <section className="mx-auto max-w-5xl px-5 py-20 text-center md:py-28">
         <p className="text-[11px] uppercase tracking-[0.3em] text-gold-deep">
-          À propos
+          About
         </p>
         <h1 className="mt-6 text-5xl leading-tight md:text-7xl">
           A feather, <em className="text-burgundy">a word,</em> a world.
@@ -72,14 +72,6 @@ export default function About() {
             </div>
             <figcaption className="mt-4 text-center text-xs uppercase tracking-[0.3em] text-gold-deep">
               Franz Kafka · 1883 – 1924
-              <a
-                href="https://commons.wikimedia.org/wiki/File:Franz_Kafka,_1923.jpg"
-                target="_blank"
-                rel="noreferrer"
-                className="mt-2 block text-[10px] tracking-[0.2em] underline decoration-gold underline-offset-4"
-              >
-                Portrait via Wikimedia Commons · Public domain
-              </a>
             </figcaption>
           </figure>
 
@@ -92,7 +84,7 @@ export default function About() {
               — Franz Kafka, letter to Oskar Pollak, 1904
             </p>
             <Link
-              to="/discover?q=franz kafka"
+              to={`/author/${encodeURIComponent("Franz Kafka")}`}
               className="mt-10 inline-block text-xs uppercase tracking-[0.2em] text-burgundy underline decoration-gold underline-offset-8"
             >
               Read Kafka
@@ -119,11 +111,11 @@ export default function About() {
       <section className="mx-auto max-w-3xl px-5 py-24 text-center">
         <Icon icon="lucide:feather" className="mx-auto h-8 w-8 text-gold" />
         <blockquote className="mt-6 font-serif text-3xl italic leading-snug md:text-4xl">
-          “Every Story Begins with a Word.”
+          Every Story Begins with a Word.
         </blockquote>
         <p className="mt-6 text-sm text-muted">
-          PLUME is a portfolio project. Book data comes from Open Library; there
-          is no physical store and no real orders are processed.
+          PLUME is a portfolio project. There is no physical store and no real
+          orders are processed.
         </p>
         <Link
           to="/discover"

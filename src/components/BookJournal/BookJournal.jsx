@@ -1,10 +1,12 @@
 import { Icon } from "@iconify/react";
+import { useState } from "react";
 import {
   getArticleDate,
   getArticleReadingMinutes,
 } from "../../data/journalArticles";
 
 export default function BookJournal({ articles }) {
+  const [expanded, setExpanded] = useState({});
   if (!articles.length) return null;
 
   return (
@@ -16,12 +18,21 @@ export default function BookJournal({ articles }) {
         Le Journal
       </p>
       <h2 id="book-journal-heading" className="mt-3 text-3xl md:text-4xl">
-        Stories around <em className="text-burgundy">this book</em>
+        Stories & essays
       </h2>
       <div className="mt-8 space-y-4">
         {articles.map((article) => (
           <article key={article.id} className="border border-line bg-white/50">
-            <details className="group">
+            <details
+              className="group"
+              onToggle={(event) => {
+                const isOpen = event.currentTarget.open;
+                setExpanded((current) => ({
+                  ...current,
+                  [article.id]: isOpen,
+                }));
+              }}
+            >
               <summary className="flex cursor-pointer list-none items-start justify-between gap-5 p-5 marker:hidden focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-burgundy md:p-7">
                 <span>
                   <span className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[10px] uppercase tracking-[0.2em] text-gold-deep">
@@ -43,7 +54,7 @@ export default function BookJournal({ articles }) {
                     {article.author}
                   </span>
                   <span className="mt-4 inline-flex items-center gap-2 text-[10px] uppercase tracking-[0.18em] text-burgundy">
-                    Read the essay on this page
+                    {expanded[article.id] ? "Hide the essay" : "Read the essay"}
                   </span>
                 </span>
                 <Icon

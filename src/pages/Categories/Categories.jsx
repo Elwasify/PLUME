@@ -39,7 +39,7 @@ const MOVEMENTS = [
   {
     name: "Surrealism",
     period: "Early 20th century",
-    text: "Born in Paris, it explored dreams and the unconscious, favoring unexpected images and the logic of the irrational.",
+    text: "Born in France, it explored dreams and the unconscious, favoring unexpected images and the logic of the irrational.",
   },
   {
     name: "Existentialism",
@@ -56,9 +56,9 @@ function CategoryCard({ category, index }) {
     <Link
       to={`/discover?category=${encodeURIComponent(category.name)}`}
       aria-label={`Explore ${category.name}`}
-      className="group flex h-full min-h-[11rem] gap-5 border border-line bg-white/40 p-5 transition-colors duration-300 hover:border-burgundy hover:bg-white/70 motion-reduce:transition-none md:p-6"
+      className="group flex h-full min-h-[11rem] min-w-0 gap-3 border border-line bg-white/40 p-3 transition-colors duration-300 hover:border-burgundy hover:bg-white/70 motion-reduce:transition-none sm:gap-4 sm:p-4 md:gap-5 md:p-6"
     >
-      <div className="w-24 shrink-0 self-start overflow-hidden border border-line bg-secondary md:w-28">
+      <div className="w-16 shrink-0 self-start overflow-hidden border border-line bg-secondary sm:w-20 md:w-28">
         {cover ? (
           <img
             src={cover.src}
@@ -77,7 +77,7 @@ function CategoryCard({ category, index }) {
         <span className="font-serif text-sm italic text-gold-deep">
           № {number}
         </span>
-        <h3 className="mt-2 font-serif text-2xl text-burgundy">
+        <h3 className="mt-2 font-serif text-lg text-burgundy sm:text-xl md:text-2xl">
           {category.name}
         </h3>
         <p className="mt-2 text-sm text-muted">{category.text}</p>
@@ -157,7 +157,7 @@ export default function Categories() {
       <section
         ref={genresRef}
         aria-labelledby="genres-heading"
-        className="mx-auto max-w-6xl scroll-mt-24 px-6 pb-16 md:pb-24"
+        className="mx-auto max-w-6xl scroll-mt-24 px-4 pb-16 sm:px-6 md:pb-24"
       >
         <p className="text-[11px] uppercase tracking-[0.3em] text-gold-deep">
           The collection
@@ -169,7 +169,7 @@ export default function Categories() {
           Browse by <em className="text-burgundy">genre.</em>
         </h2>
 
-        <div className="mt-10 grid auto-rows-fr gap-4 md:grid-cols-2 md:gap-6 lg:grid-cols-3">
+        <div className="mt-10 grid auto-rows-fr grid-cols-[minmax(0,1fr)] gap-4 md:grid-cols-2 md:gap-6 lg:grid-cols-3">
           {categories.map((category, index) => (
             <CategoryCard
               key={category.name}
@@ -196,8 +196,8 @@ export default function Categories() {
           </h2>
           <p className="mt-4 max-w-2xl text-muted">
             Movements describe how writers thought and wrote in a given era.
-            They are different from genres, and this section is an introduction
-            to read, not a filter.
+            They are different from genres, and this section is a short
+            introduction, not a filter.
           </p>
 
           <div className="mt-10 grid auto-rows-fr gap-px border border-line bg-line sm:grid-cols-2">

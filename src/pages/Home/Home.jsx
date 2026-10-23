@@ -9,7 +9,7 @@ import usePageTitle from "../../hooks/usePageTitle";
 
 const topics = [
   { label: "Stoicism", q: "stoicism" },
-  { label: "Paris essays", q: "paris essays" },
+  { label: "French literature", q: "french literature" },
   { label: "Women in literature", q: "women literature" },
 ];
 
