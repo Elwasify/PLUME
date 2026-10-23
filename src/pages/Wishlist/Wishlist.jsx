@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { Icon } from "@iconify/react";
 import { formatPrice } from "../../context/shopUtils";
@@ -7,9 +7,45 @@ import BookCover from "../../components/BookCover/BookCover";
 import usePageTitle from "../../hooks/usePageTitle";
 
 export default function Wishlist() {
-  const { wishlist, toggleWishlist, moveToCart, cartQty } = useShop();
+  const { wishlist, toggleWishlist, moveToCart, cartQty, inWishlist } = useShop();
   const [message, setMessage] = useState("");
+  const [removedBook, setRemovedBook] = useState(null);
+  const timeoutRef = useRef(null);
   usePageTitle("Wishlist");
+
+  useEffect(
+    () => () => {
+      window.clearTimeout(timeoutRef.current);
+    },
+    [],
+  );
+
+  const removeFromWishlist = (book) => {
+    toggleWishlist(book);
+    setRemovedBook(book);
+    setMessage(`${book.title} removed from your wishlist.`);
+    window.clearTimeout(timeoutRef.current);
+    timeoutRef.current = window.setTimeout(() => {
+      setMessage("");
+      setRemovedBook(null);
+    }, 4000);
+  };
+
+  const undoRemove = () => {
+    if (removedBook && !inWishlist(removedBook.id)) {
+      toggleWishlist(removedBook);
+    }
+    window.clearTimeout(timeoutRef.current);
+    setMessage("");
+    setRemovedBook(null);
+  };
+
+  const moveBookToBag = (book) => {
+    window.clearTimeout(timeoutRef.current);
+    setRemovedBook(null);
+    moveToCart(book);
+    setMessage(`${book.title} moved to your bag.`);
+  };
 
   return (
     <section className="mx-auto max-w-6xl px-6 py-12 md:py-20">
@@ -21,6 +57,18 @@ export default function Wishlist() {
       </h1>
       <p role="status" aria-live="polite" className="mt-3 min-h-5 text-sm text-muted">
         {message}
+        {removedBook && (
+          <>
+            {" "}
+            <button
+              type="button"
+              onClick={undoRemove}
+              className="cursor-pointer text-burgundy underline underline-offset-2 hover:text-ink"
+            >
+              Undo
+            </button>
+          </>
+        )}
       </p>
 
       {wishlist.length === 0 ? (
@@ -60,12 +108,9 @@ export default function Wishlist() {
                   </Link>
                   <button
                     type="button"
-                    onClick={() => {
-                      toggleWishlist(b);
-                      setMessage(`${b.title} removed from your wishlist.`);
-                    }}
+                    onClick={() => removeFromWishlist(b)}
                     aria-label={`Remove ${b.title} from wishlist`}
-                    className="absolute right-2 top-2 flex h-9 w-9 items-center justify-center rounded-full bg-cream/90 text-burgundy transition hover:bg-white"
+                    className="absolute right-2 top-2 flex h-9 w-9 cursor-pointer items-center justify-center rounded-full border border-burgundy/30 bg-cream text-burgundy shadow-sm transition hover:border-burgundy hover:bg-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-burgundy"
                   >
                     <Icon icon="lucide:x" className="h-4 w-4" />
                   </button>
@@ -85,24 +130,18 @@ export default function Wishlist() {
                 <div className="mt-auto pt-3">
                   <p className="font-['Inter',sans-serif] text-sm font-light text-burgundy">
                     {formatPrice(b.price)}
-                    {b.demo && (
-                      <span className="ml-1 text-[10px] text-muted">demo</span>
-                    )}
                   </p>
 
                   <button
                     type="button"
-                    onClick={() => {
-                      moveToCart(b);
-                      setMessage(`${b.title} moved to your cart.`);
-                    }}
+                    onClick={() => moveBookToBag(b)}
                     className="mt-3 flex h-10 w-full items-center justify-center gap-2 border border-line text-[11px] uppercase tracking-[0.2em] transition hover:border-burgundy hover:text-burgundy"
                   >
                     <Icon
                       icon={qty > 0 ? "lucide:check" : "lucide:shopping-bag"}
                       className="h-3.5 w-3.5"
                     />
-                    Move to cart
+                    Move to bag
                   </button>
                 </div>
               </article>

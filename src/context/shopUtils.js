@@ -1,3 +1,5 @@
+import { isLatinText, latinNames } from "../utils/text";
+
 function demoPrice(id) {
   let h = 0;
   for (let i = 0; i < id.length; i++) h = (h * 31 + id.charCodeAt(i)) % 9973;
@@ -9,15 +11,18 @@ export function toItem(book) {
 
   if (!book.volumeInfo) {
     const price = Number(book.price);
+    const title =
+      typeof book.title === "string" && book.title.trim()
+        ? book.title.trim()
+        : "Untitled";
+    if (!isLatinText(title)) return null;
     return {
       id: book.id.trim(),
-      title: typeof book.title === "string" && book.title.trim()
-        ? book.title
-        : "Untitled",
+      title,
       authors: Array.isArray(book.authors)
-        ? book.authors.filter((author) => typeof author === "string")
+        ? latinNames(book.authors)
         : typeof book.authors === "string" && book.authors.trim()
-          ? [book.authors]
+          ? latinNames([book.authors])
           : [],
       cover: typeof book.cover === "string"
         ? book.cover.replace(/^http:/, "https:")
@@ -32,11 +37,16 @@ export function toItem(book) {
   const amount = Number(sale?.amount);
   const real =
     sale?.currencyCode === "USD" && Number.isFinite(amount) && amount > 0;
+  const title =
+    typeof info.title === "string" && info.title.trim()
+      ? info.title.trim()
+      : "Untitled";
+  if (!isLatinText(title)) return null;
   return {
     id: book.id,
-    title: info.title || "Untitled",
+    title,
     authors: Array.isArray(info.authors)
-      ? info.authors.filter((author) => typeof author === "string")
+      ? latinNames(info.authors)
       : [],
     cover:
       info.imageLinks?.thumbnail?.replace(/^http:/, "https:") || "",

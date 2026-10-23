@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import ShopContext from "./ShopContextValue";
 import { toItem } from "./shopUtils";
+import { isLatinText, latinNames } from "../utils/text";
 
 const CART_KEY = "plume:cart";
 const WISHLIST_KEY = "plume:wishlist";
@@ -19,20 +20,18 @@ function read(key) {
 function normalizeItem(item) {
   if (!item || typeof item !== "object" || Array.isArray(item)) return null;
   if (typeof item.id !== "string" || !item.id.trim()) return null;
+  if (!isLatinText(item.title)) return null;
 
   const price = Number(item.price);
   const authors = Array.isArray(item.authors)
-    ? item.authors.filter((author) => typeof author === "string")
+    ? latinNames(item.authors)
     : typeof item.authors === "string" && item.authors.trim()
-      ? [item.authors]
+      ? latinNames([item.authors])
       : [];
 
   return {
     id: item.id.trim(),
-    title:
-      typeof item.title === "string" && item.title.trim()
-        ? item.title
-        : "Untitled",
+    title: item.title.trim(),
     authors,
     cover:
       typeof item.cover === "string"
@@ -89,28 +88,19 @@ export function ShopProvider({ children }) {
 
   const addToCart = (book) => {
     const item = toItem(book);
-    if (!item) return;
+    if (!item || cart.some((i) => i.id === item.id)) return false;
     setCart((prev) => {
-      const found = prev.find((i) => i.id === item.id);
-      if (found) {
-        return prev.map((i) =>
-          i.id === item.id ? { ...i, qty: clampQty(i.qty + 1) } : i,
-        );
-      }
+      if (prev.some((i) => i.id === item.id)) return prev;
       return [...prev, { ...item, qty: 1 }];
     });
+    return true;
   };
 
   const moveToCart = (book) => {
     const item = toItem(book);
     if (!item) return;
     setCart((prev) => {
-      const found = prev.find((i) => i.id === item.id);
-      if (found) {
-        return prev.map((i) =>
-          i.id === item.id ? { ...i, qty: clampQty(i.qty + 1) } : i,
-        );
-      }
+      if (prev.some((i) => i.id === item.id)) return prev;
       return [...prev, { ...item, qty: 1 }];
     });
     setWishlist((prev) => prev.filter((i) => i.id !== item.id));

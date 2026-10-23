@@ -9,11 +9,9 @@ import usePageTitle from "../../hooks/usePageTitle";
 export default function Cart() {
   const { cart, cartCount, cartTotal, setQty, removeFromCart, clearCart } =
     useShop();
-  const [demoDone, setDemoDone] = useState(false);
   const [message, setMessage] = useState("");
+  const [confirmClear, setConfirmClear] = useState(false);
   usePageTitle("Your bag");
-
-  const hasDemoPrices = cart.some((i) => i.demo);
 
   return (
     <section className="mx-auto max-w-6xl px-6 py-12 md:py-20">
@@ -79,8 +77,7 @@ export default function Cart() {
                       type="button"
                       onClick={() => {
                         removeFromCart(i.id);
-                        setMessage(`${i.title} removed from your cart.`);
-                        setDemoDone(false);
+                        setMessage(`${i.title} removed from your bag.`);
                       }}
                       aria-label={`Remove ${i.title}`}
                       className="shrink-0 text-muted transition hover:text-burgundy"
@@ -116,9 +113,6 @@ export default function Cart() {
 
                     <p className="font-['Inter',sans-serif] text-lg font-light text-burgundy">
                       {formatPrice(i.price * i.qty)}
-                      {i.demo && (
-                        <span className="ml-2 text-[10px] text-muted">demo price</span>
-                      )}
                     </p>
                   </div>
                 </div>
@@ -142,35 +136,16 @@ export default function Cart() {
               </div>
             </dl>
 
-            {hasDemoPrices && (
-              <p className="mt-4 text-xs leading-relaxed text-muted">
-                Prices marked “demo” are placeholders, not verified publisher
-                or retailer prices.
-              </p>
-            )}
             <p className="mt-4 text-xs leading-relaxed text-muted">
               Shipping and taxes are not calculated.
             </p>
 
-            <button
-              type="button"
-              onClick={() => setDemoDone(true)}
-              className="mt-6 w-full bg-burgundy py-3.5 text-xs uppercase tracking-[0.2em] text-cream transition hover:bg-burgundy/90"
+            <Link
+              to="/payment"
+              className="mt-6 block w-full bg-burgundy py-3.5 text-center text-xs uppercase tracking-[0.2em] text-cream transition hover:bg-burgundy/90"
             >
               Checkout
-            </button>
-
-            {demoDone && (
-              <div
-                role="status"
-                className="mt-4 border border-gold/50 bg-cream p-4 text-sm"
-              >
-                <p className="text-burgundy">This is a demo checkout.</p>
-                <p className="mt-1 text-muted">
-                  No payment was taken and no order was placed.
-                </p>
-              </div>
-            )}
+            </Link>
 
             <Link
               to="/discover"
@@ -181,16 +156,52 @@ export default function Cart() {
 
             <button
               type="button"
-              onClick={() => {
-                clearCart();
-                setDemoDone(false);
-                setMessage("Your cart has been emptied.");
-              }}
-              className="mt-4 w-full text-xs uppercase tracking-[0.2em] text-muted transition hover:text-burgundy"
+              onClick={() => setConfirmClear(true)}
+              className="mt-8 flex w-full cursor-pointer items-center justify-center gap-2 border border-burgundy/40 px-4 py-3 text-xs uppercase tracking-[0.2em] text-burgundy transition hover:bg-burgundy/5"
             >
-              Empty bag
+              <Icon icon="lucide:trash-2" className="h-4 w-4" />
+              Clear bag
             </button>
           </aside>
+        </div>
+      )}
+
+      {confirmClear && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink/40 p-4">
+          <div
+            role="alertdialog"
+            aria-modal="true"
+            aria-labelledby="clear-bag-title"
+            className="w-full max-w-sm border border-line bg-cream p-6 shadow-xl"
+            onKeyDown={(event) => {
+              if (event.key === "Escape") setConfirmClear(false);
+            }}
+          >
+            <h2 id="clear-bag-title" className="font-serif text-xl">
+              Remove all items from your bag?
+            </h2>
+            <div className="mt-6 flex justify-end gap-3">
+              <button
+                type="button"
+                autoFocus
+                onClick={() => setConfirmClear(false)}
+                className="cursor-pointer border border-line px-4 py-2 text-xs uppercase tracking-[0.15em] transition hover:border-burgundy hover:text-burgundy"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  clearCart();
+                  setMessage("Your bag has been cleared.");
+                  setConfirmClear(false);
+                }}
+                className="cursor-pointer border border-burgundy/40 px-4 py-2 text-xs uppercase tracking-[0.15em] text-burgundy transition hover:bg-burgundy/5"
+              >
+                Confirm
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </section>
