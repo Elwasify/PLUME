@@ -39,10 +39,22 @@ export default function Footer() {
 
   const onSubmit = (e) => {
     e.preventDefault();
-    if (!EMAIL_RE.test(email.trim())) {
+    const value = email.trim().toLowerCase();
+
+    if (!EMAIL_RE.test(value)) {
       setStatus("error");
       return;
     }
+
+    try {
+      const saved = JSON.parse(localStorage.getItem("subscribers") || "[]");
+      if (saved.includes(value)) {
+        setStatus("duplicate");
+        return;
+      }
+      localStorage.setItem("subscribers", JSON.stringify([...saved, value]));
+    } catch {}
+
     setStatus("done");
     setEmail("");
   };
@@ -52,7 +64,9 @@ export default function Footer() {
       ? "Thanks for your interest."
       : status === "error"
         ? "Please enter a valid email address."
-        : "";
+        : status === "duplicate"
+          ? "You are already subscribed."
+          : "";
 
   return (
     <footer className="bg-ink text-cream">
