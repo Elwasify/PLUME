@@ -43,7 +43,10 @@ export default function Navbar() {
       </div>
 
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-4 px-6 md:h-[72px] md:px-10">
-        <Logo className="shrink-0" />
+        <Logo
+          className="-ml-2 shrink-0"
+          imageClassName="h-12 w-32"
+        />
 
         <nav className="hidden items-center gap-8 md:flex" aria-label="Main">
           {links.map((l) => (
