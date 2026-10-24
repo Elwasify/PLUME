@@ -42,7 +42,7 @@ export default function Navbar() {
         </div>
       </div>
 
-      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-4 px-6 md:h-[72px] md:px-10">
+      <div className="mx-auto flex h-[72px] max-w-7xl items-center justify-between gap-4 px-6 md:h-20 md:px-10">
         <Logo
           className="-ml-2 shrink-0"
           imageClassName="h-12 w-32"
