@@ -6,9 +6,25 @@ export default function Newsletter() {
 
   const onSubmit = (e) => {
     e.preventDefault();
-    const valid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
-    setStatus(valid ? "success" : "error");
-    if (valid) setEmail("");
+    const value = email.trim().toLowerCase();
+    const valid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+
+    if (!valid) {
+      setStatus("error");
+      return;
+    }
+
+    try {
+      const saved = JSON.parse(localStorage.getItem("subscribers") || "[]");
+      if (saved.includes(value)) {
+        setStatus("duplicate");
+        return;
+      }
+      localStorage.setItem("subscribers", JSON.stringify([...saved, value]));
+    } catch {}
+
+    setStatus("success");
+    setEmail("");
   };
 
   return (
@@ -53,14 +69,15 @@ export default function Newsletter() {
 
         <p aria-live="polite" className="mt-4 min-h-6 text-sm">
           {status === "success" && (
-            <span className="text-gold-deep">
-              Thank you for your interest.
-            </span>
+            <span className="text-gold-deep">Thank you for your interest.</span>
           )}
           {status === "error" && (
             <span className="text-burgundy">
               Please enter a valid email address.
             </span>
+          )}
+          {status === "duplicate" && (
+            <span className="text-burgundy">You are already subscribed.</span>
           )}
         </p>
       </div>
