@@ -5,13 +5,18 @@ export default function Logo({
   className = "",
   imageClassName = "",
   light = false,
+  onClick,
 }) {
   return (
-    <Link to="/" className={`group flex items-center gap-3 ${className}`}>
+    <Link
+      to="/"
+      onClick={onClick}
+      className={`group flex items-center gap-3 ${className}`}
+    >
       <img
         src={logo}
         alt="Plume"
-        className={`h-[72px] w-44 object-cover object-[center_40%] ${imageClassName} ${
+        className={`${imageClassName || "h-[72px] w-44"} object-cover object-[center_40%] ${
           light ? "brightness-0 invert" : ""
         }`}
       />

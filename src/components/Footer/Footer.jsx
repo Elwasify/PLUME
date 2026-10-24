@@ -53,7 +53,9 @@ export default function Footer() {
         return;
       }
       localStorage.setItem("subscribers", JSON.stringify([...saved, value]));
-    } catch {}
+    } catch {
+      // localStorage unavailable or data corrupted — subscribe anyway
+    }
 
     setStatus("done");
     setEmail("");
@@ -73,7 +75,11 @@ export default function Footer() {
       <div className="mx-auto max-w-6xl px-6 py-14 md:py-20">
         <div className="grid gap-12 lg:grid-cols-[1.2fr_2fr] lg:gap-16">
           <div className="max-w-sm">
-            <Logo light />
+            <Logo
+              light
+              imageClassName="h-[72px] w-44"
+              onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+            />
             <h2 className="mt-8 font-serif text-2xl leading-tight">
               New arrivals and reading lists
             </h2>
