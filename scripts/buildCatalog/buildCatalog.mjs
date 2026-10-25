@@ -73,25 +73,46 @@ const FEATURED_AUTHORS = [
   "Miguel de Cervantes",
 ];
 
-const FIELDS = "key,title,author_name,cover_i,first_publish_year";
+const ALIASES = {
+  "Fyodor Dostoevsky": ["Fyodor Dostoevsky", "Fyodor Dostoyevsky"],
+  "Leo Tolstoy": ["Leo Tolstoy", "Lev Tolstoy", "Leo Tolstoi"],
+  "Naguib Mahfouz": ["Naguib Mahfouz", "Naguib Mahfuz"],
+  "J. R. R. Tolkien": ["J. R. R. Tolkien", "J.R.R. Tolkien"],
+};
+
+const MATCH = {
+  "Fyodor Dostoevsky": "dostoy",
+  "Leo Tolstoy": "tolsto",
+  "Naguib Mahfouz": "mahf",
+  "Emily Brontë": "bront",
+  "Charlotte Brontë": "bront",
+};
+
+const FIELDS = "key,title,author_name,cover_i,first_publish_year,edition_count";
 const PAGES_PER_CATEGORY = 5;
-const PER_AUTHOR = 20;
-const DELAY = 350;
+const PER_AUTHOR = 30;
+const DELAY = 400;
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 const cap = (s) => s.replace(/\b\w/g, (c) => c.toUpperCase());
 
+const plain = (s) =>
+  s
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase();
+
 const okTitle = (s) =>
   /^[\x20-\x7E\u2018\u2019\u201C\u201D\u2013\u2014]+$/.test(s);
 const okAuthor = (s) => /^[\x20-\x7E\u00C0-\u024F\u2018\u2019]*$/.test(s);
 
-const toBook = (d, category) => ({
+const toBook = (d, category, author) => ({
   id: d.key.replace("/works/", ""),
   title: d.title.trim(),
-  author: d.author_name?.[0] ?? "",
+  author: author ?? d.author_name?.[0] ?? "",
   year: d.first_publish_year ?? null,
-  cover: d.cover_i,
+  cover: d.cover_i ?? null,
   category,
 });
 
@@ -102,8 +123,10 @@ const usable = (d) =>
   okTitle(d.title.trim()) &&
   okAuthor(d.author_name?.[0] ?? "");
 
+const usableFeatured = (d) => d.title && d.key?.startsWith("/works/");
+
 async function getDocs(params) {
-  for (let attempt = 0; attempt < 3; attempt++) {
+  for (let attempt = 0; attempt < 4; attempt++) {
     try {
       const res = await fetch(
         `https://openlibrary.org/search.json?${new URLSearchParams(params)}`,
@@ -115,23 +138,41 @@ async function getDocs(params) {
     } catch {
       await sleep(1000);
     }
-    await sleep(1500 * (attempt + 1));
+    await sleep(2000 * (attempt + 1));
   }
-  return [];
+  return null;
 }
 
 const books = [];
-const seen = new Set();
+const byId = new Map();
 
 function add(list) {
   let added = 0;
   for (const b of list) {
-    if (seen.has(b.id)) continue;
-    seen.add(b.id);
+    if (byId.has(b.id)) continue;
+    byId.set(b.id, b);
     books.push(b);
     added++;
   }
   return added;
+}
+
+function addFeatured(list) {
+  let added = 0;
+  let reused = 0;
+  for (const b of list) {
+    const existing = byId.get(b.id);
+    if (existing) {
+      existing.category = "Classics";
+      existing.author = b.author;
+      reused++;
+      continue;
+    }
+    byId.set(b.id, b);
+    books.push(b);
+    added++;
+  }
+  return { added, reused };
 }
 
 for (const category of CATEGORIES) {
@@ -143,7 +184,9 @@ for (const category of CATEGORIES) {
       limit: "100",
       page: String(page),
     });
-    total += add(docs.filter(usable).map((d) => toBook(d, cap(category))));
+    total += add(
+      (docs ?? []).filter(usable).map((d) => toBook(d, cap(category))),
+    );
     await sleep(DELAY);
   }
   console.log(`${cap(category)}: ${total} books`);
@@ -151,22 +194,38 @@ for (const category of CATEGORIES) {
 
 let authorTotal = 0;
 for (const name of FEATURED_AUTHORS) {
-  const docs = await getDocs({
-    q: `author:"${name}" language:eng`,
-    fields: FIELDS,
-    sort: "editions",
-    limit: "60",
-  });
-  const last = name.split(" ").pop().toLowerCase();
+  const names = ALIASES[name] ?? [name];
+  const match = MATCH[name] ?? plain(name.split(" ").pop());
+  const matches = (n) => plain(n).includes(match);
+  let docs = [];
+  let failed = 0;
+  for (const alias of names) {
+    const found = await getDocs({
+      q: `author:"${alias}"`,
+      fields: FIELDS,
+      limit: "100",
+    });
+    if (found === null) failed++;
+    docs = docs.concat(found ?? []);
+    await sleep(DELAY);
+  }
   const list = docs
-    .filter(usable)
-    .filter((d) => (d.author_name?.[0] ?? "").toLowerCase().includes(last))
+    .filter(usableFeatured)
+    .filter((d) => (d.author_name ?? []).some(matches))
+    .sort((a, b) => (b.edition_count ?? 0) - (a.edition_count ?? 0))
     .slice(0, PER_AUTHOR)
-    .map((d) => toBook(d, "Classics"));
-  const added = add(list);
-  authorTotal += added;
-  console.log(`${name}: ${added} books`);
-  await sleep(DELAY);
+    .map((d) => {
+      const latin = (d.author_name ?? []).find(
+        (n) => matches(n) && okAuthor(n),
+      );
+      return toBook(d, "Classics", latin ?? name);
+    });
+  const { added, reused } = addFeatured(list);
+  authorTotal += added + reused;
+  const note = failed ? ` (${failed} request failed)` : "";
+  console.log(
+    `${name}: ${added} new, ${reused} moved from other categories${note}`,
+  );
 }
 
 await mkdir("public", { recursive: true });

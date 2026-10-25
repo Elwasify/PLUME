@@ -13,7 +13,7 @@ export async function loadCatalog(signal) {
       title: b.title,
       authors: b.author ? [b.author] : [],
       publishedDate: b.year ? String(b.year) : undefined,
-      imageLinks: { thumbnail: coverUrl(b.cover) },
+      imageLinks: b.cover ? { thumbnail: coverUrl(b.cover) } : undefined,
     },
   }));
 }

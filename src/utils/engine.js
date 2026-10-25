@@ -6,6 +6,25 @@ let authorNames = [];
 
 const fuzzyByLength = (term) => (term.length <= 5 ? false : 0.2);
 
+const fold = (text) =>
+  text
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/ł/g, "l")
+    .replace(/ø/g, "o")
+    .replace(/đ/g, "d")
+    .replace(/ß/g, "ss")
+    .replace(/æ/g, "ae")
+    .replace(/œ/g, "oe");
+
+const authorKey = (name) =>
+  fold(name)
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim();
+
+const cleanName = (name) => name.replace(/\s+/g, " ").trim();
+
 export function buildEngine(books) {
   const docs = books.map((b) => ({
     id: b.id,
@@ -16,17 +35,20 @@ export function buildEngine(books) {
 
   byId = new Map(books.map((b) => [b.id, b]));
 
-  const names = new Set();
+  const names = new Map();
   books.forEach((b) => {
     (b.volumeInfo.authors || []).forEach((n) => {
-      if (n) names.add(n);
+      if (!n) return;
+      const key = authorKey(n);
+      if (key && !names.has(key)) names.set(key, cleanName(n));
     });
   });
-  authorNames = [...names];
+  authorNames = [...names.entries()].map(([key, name]) => ({ key, name }));
 
   engine = new MiniSearch({
     fields: ["title", "author", "category"],
     storeFields: ["category"],
+    processTerm: (term) => fold(term),
     searchOptions: {
       boost: { title: 3, author: 2 },
       prefix: true,
@@ -57,15 +79,13 @@ export function search(query, { category = "" } = {}) {
 }
 
 export function searchAuthorsLocal(query, limit = 2) {
-  const q = query.trim().toLowerCase();
+  const q = authorKey(query);
   if (!engine || q.length < 2) return [];
-  const words = q.split(/\s+/).filter(Boolean);
+  const words = q.split(" ").filter(Boolean);
   return authorNames
-    .filter((name) => {
-      const lower = name.toLowerCase();
-      return words.every((w) => lower.includes(w));
-    })
-    .slice(0, limit);
+    .filter(({ key }) => words.every((w) => key.includes(w)))
+    .slice(0, limit)
+    .map(({ name }) => name);
 }
 
 export const suggest = (q) =>
@@ -79,7 +99,8 @@ export const suggest = (q) =>
 export const didYouMean = (q) => {
   const text = q.trim();
   if (!engine || text.length < 3) return "";
+  const folded = fold(text);
   const list = engine.autoSuggest(text, { fuzzy: 0.25, prefix: false });
-  const found = list.find((s) => s.suggestion !== text.toLowerCase());
+  const found = list.find((s) => s.suggestion !== folded);
   return found ? found.suggestion : "";
 };
