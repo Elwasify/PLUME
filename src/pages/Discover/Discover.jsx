@@ -3,6 +3,7 @@ import { useSearchParams } from "react-router-dom";
 import { Icon } from "@iconify/react";
 import BookCard from "../../components/BookCard/BookCard";
 import AuthorCard from "../../components/AuthorCard/AuthorCard";
+import SearchBox from "../../components/SearchBox/SearchBox.jsx";
 import categories from "../../data/categories";
 import { searchBooksPage } from "../../api/books";
 import { searchAuthors } from "../../api/authors";
@@ -306,10 +307,9 @@ export default function Discover() {
     }
   }
 
-  const onSubmit = (e) => {
-    e.preventDefault();
-    update({ q: value.trim(), category: "" });
-    remember(value);
+  const submitSearch = (text) => {
+    update({ q: text.trim(), category: "" });
+    remember(text);
     setDraft(null);
   };
 
@@ -357,30 +357,15 @@ export default function Discover() {
       </p>
       <h1 className="mt-3 text-4xl md:text-5xl">{heading}</h1>
 
-      <form
-        role="search"
-        onSubmit={onSubmit}
-        className="mt-8 flex max-w-2xl items-center border-b border-ink/30 focus-within:border-burgundy"
-      >
-        <Icon icon="lucide:search" className="h-5 w-5 text-muted" />
-        <input
-          value={value}
-          onChange={(e) => setDraft(e.target.value)}
-          placeholder="Search by title, author or subject…"
-          aria-label="Search books and authors"
-          className="w-full bg-transparent px-3 py-3 text-base outline-none placeholder:text-muted"
-        />
-        {value && (
-          <button
-            type="button"
-            onClick={clearSearch}
-            aria-label="Clear search"
-            className="text-muted transition hover:text-burgundy"
-          >
-            <Icon icon="lucide:x" className="h-5 w-5" />
-          </button>
-        )}
-      </form>
+      <SearchBox
+        variant="page"
+        className="mt-8 max-w-2xl"
+        value={value}
+        onChange={setDraft}
+        onSearch={submitSearch}
+        onClear={clearSearch}
+        placeholder="Search by title, author or subject…"
+      />
 
       {!value && recent.length > 0 && (
         <div className="mt-4 flex flex-wrap items-center gap-2 text-sm">

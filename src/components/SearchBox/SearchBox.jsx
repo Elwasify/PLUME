@@ -10,7 +10,16 @@ import {
 } from "../../utils/engine";
 import Highlight from "../Highlight/Highlight.jsx";
 
-export default function SearchBox({ className = "", onDone }) {
+export default function SearchBox({
+  className = "",
+  onDone,
+  variant = "nav",
+  value,
+  onChange,
+  onSearch,
+  onClear,
+  placeholder = "Title, author, subject…",
+}) {
   const navigate = useNavigate();
   const { ready } = useCatalog();
   const [term, setTerm] = useState("");
@@ -19,10 +28,19 @@ export default function SearchBox({ className = "", onDone }) {
   const [active, setActive] = useState(-1);
   const boxRef = useRef(null);
 
+  const controlled = value !== undefined;
+  const text = controlled ? value : term;
+  const isPage = variant === "page";
+
+  const changeText = (next) => {
+    if (controlled) onChange?.(next);
+    else setTerm(next);
+  };
+
   useEffect(() => {
-    const t = setTimeout(() => setDebounced(term), 200);
+    const t = setTimeout(() => setDebounced(text), 200);
     return () => clearTimeout(t);
-  }, [term]);
+  }, [text]);
 
   useEffect(() => {
     const close = (e) => {
@@ -57,27 +75,29 @@ export default function SearchBox({ className = "", onDone }) {
     [authors, results],
   );
 
-  const goSearch = (text) => {
-    const q = text.trim();
-    if (!q) return;
-    navigate(`/discover?q=${encodeURIComponent(q)}`);
-    setTerm("");
+  const finish = () => {
+    if (!controlled) setTerm("");
+    setActive(-1);
     setOpen(false);
     onDone?.();
+  };
+
+  const goSearch = (input) => {
+    const q = input.trim();
+    if (!q) return;
+    if (onSearch) onSearch(q);
+    else navigate(`/discover?q=${encodeURIComponent(q)}`);
+    finish();
   };
 
   const goBook = (book) => {
     navigate(`/books/${book.id}`);
-    setTerm("");
-    setOpen(false);
-    onDone?.();
+    finish();
   };
 
   const goAuthor = (name) => {
     navigate(`/author/${encodeURIComponent(name)}`);
-    setTerm("");
-    setOpen(false);
-    onDone?.();
+    finish();
   };
 
   const pick = (item) => {
@@ -88,12 +108,13 @@ export default function SearchBox({ className = "", onDone }) {
   const onSubmit = (e) => {
     e.preventDefault();
     if (active >= 0 && items[active]) pick(items[active]);
-    else goSearch(term);
+    else goSearch(text);
   };
 
   const onKeyDown = (e) => {
     if (e.key === "ArrowDown") {
       e.preventDefault();
+      setOpen(true);
       setActive((i) => Math.min(i + 1, items.length - 1));
     } else if (e.key === "ArrowUp") {
       e.preventDefault();
@@ -103,7 +124,7 @@ export default function SearchBox({ className = "", onDone }) {
     }
   };
 
-  const hasQuery = term.trim().length >= 2;
+  const hasQuery = text.trim().length >= 2;
 
   return (
     <div ref={boxRef} className={`relative ${className}`}>
@@ -112,32 +133,56 @@ export default function SearchBox({ className = "", onDone }) {
         onSubmit={onSubmit}
         className="flex items-center border-b border-ink/30 focus-within:border-burgundy"
       >
-        <Icon icon="lucide:search" className="h-4 w-4 text-muted" />
+        <Icon
+          icon="lucide:search"
+          className={isPage ? "h-5 w-5 text-muted" : "h-4 w-4 text-muted"}
+        />
         <input
-          value={term}
+          value={text}
           onChange={(e) => {
-            setTerm(e.target.value);
+            changeText(e.target.value);
             setActive(-1);
             setOpen(true);
           }}
           onFocus={() => setOpen(true)}
           onKeyDown={onKeyDown}
-          placeholder="Title, author, subject…"
-          aria-label="Search books"
+          placeholder={placeholder}
+          aria-label="Search books and authors"
           autoComplete="off"
-          className="w-full bg-transparent px-2 py-2 text-sm outline-none placeholder:text-muted"
+          className={
+            isPage
+              ? "w-full bg-transparent px-3 py-3 text-base outline-none placeholder:text-muted"
+              : "w-full bg-transparent px-2 py-2 text-sm outline-none placeholder:text-muted"
+          }
         />
+        {isPage && text && onClear && (
+          <button
+            type="button"
+            onClick={() => {
+              onClear();
+              setOpen(false);
+            }}
+            aria-label="Clear search"
+            className="text-muted transition hover:text-burgundy"
+          >
+            <Icon icon="lucide:x" className="h-5 w-5" />
+          </button>
+        )}
       </form>
 
       {open && hasQuery && (
-        <div className="absolute left-0 right-0 z-50 mt-1 min-w-[280px] overflow-hidden rounded-sm border border-line bg-cream shadow-lg">
+        <div
+          className={`absolute left-0 right-0 z-50 mt-1 overflow-hidden rounded-sm border border-line bg-cream shadow-lg ${
+            isPage ? "" : "min-w-[280px]"
+          }`}
+        >
           {suggestions.length > 0 && (
             <div className="flex flex-wrap gap-2 border-b border-line p-3">
               {suggestions.map((s) => (
                 <button
                   key={s}
                   type="button"
-                  onClick={() => setTerm(s)}
+                  onClick={() => changeText(s)}
                   className="rounded-full border border-line px-3 py-1 text-xs hover:border-gold hover:text-burgundy"
                 >
                   {s}
@@ -168,7 +213,7 @@ export default function SearchBox({ className = "", onDone }) {
                         <span className="block truncate text-sm">
                           <Highlight
                             text={item.name}
-                            terms={term.trim().split(/\s+/)}
+                            terms={text.trim().split(/\s+/)}
                           />
                         </span>
                         <span className="block truncate text-xs uppercase tracking-[0.2em] text-gold-deep">
@@ -221,7 +266,7 @@ export default function SearchBox({ className = "", onDone }) {
                   Did you mean{" "}
                   <button
                     type="button"
-                    onClick={() => setTerm(didYou)}
+                    onClick={() => changeText(didYou)}
                     className="italic text-burgundy underline"
                   >
                     {didYou}
@@ -234,10 +279,10 @@ export default function SearchBox({ className = "", onDone }) {
 
           <button
             type="button"
-            onClick={() => goSearch(term)}
+            onClick={() => goSearch(text)}
             className="w-full border-t border-line px-4 py-3 text-left text-sm text-burgundy hover:bg-gold/10"
           >
-            See all results for "{term}"
+            See all results for "{text}"
           </button>
         </div>
       )}
