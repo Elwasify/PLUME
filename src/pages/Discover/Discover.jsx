@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Icon } from "@iconify/react";
 import BookCard from "../../components/BookCard/BookCard";
@@ -7,8 +7,11 @@ import categories from "../../data/categories";
 import { searchBooksPage } from "../../api/books";
 import { searchAuthors } from "../../api/authors";
 import usePageTitle from "../../hooks/usePageTitle";
+import useCatalog from "../../hooks/useCatalog";
+import { search, didYouMean } from "../../utils/engine";
 
 const LIMIT = 20;
+const LOCAL_PAGE = 12;
 const RECENT_KEY = "plume:recent-searches";
 
 const SORTS = [
@@ -23,15 +26,21 @@ function hasMore(page, total, totalExact, received, limit) {
   return received >= limit;
 }
 
-function sortBooks(books, sort) {
-  if (sort !== "alphabetical") return books;
-  return [...books].sort((a, b) =>
-    (a.volumeInfo.title || "").localeCompare(
-      b.volumeInfo.title || "",
-      undefined,
-      { sensitivity: "base" },
-    ),
-  );
+function sortBooks(books, sort, local = false) {
+  if (sort === "alphabetical") {
+    return [...books].sort((a, b) =>
+      (a.volumeInfo.title || "").localeCompare(
+        b.volumeInfo.title || "",
+        undefined,
+        { sensitivity: "base" },
+      ),
+    );
+  }
+  if (sort === "newest" && local) {
+    const year = (b) => Number(b.volumeInfo.publishedDate) || 0;
+    return [...books].sort((a, b) => year(b) - year(a));
+  }
+  return books;
 }
 
 function loadRecent() {
@@ -76,10 +85,15 @@ export default function Discover() {
   const category = searchParams.get("category") || "";
   const sort = searchParams.get("sort") || "";
 
+  const { ready } = useCatalog();
+  const searching = q.trim().length >= 2;
+  const useLocal = searching && ready;
+
   const [draft, setDraft] = useState(null);
   const [recent, setRecent] = useState(loadRecent);
   const [retry, setRetry] = useState(0);
   const [authorRetry, setAuthorRetry] = useState(0);
+  const [shown, setShown] = useState({ key: "", count: LOCAL_PAGE });
   const [data, setData] = useState({
     key: "",
     books: [],
@@ -89,7 +103,11 @@ export default function Discover() {
     totalExact: false,
     error: false,
   });
-  const [authorsData, setAuthorsData] = useState({ key: "", list: [], error: false });
+  const [authorsData, setAuthorsData] = useState({
+    key: "",
+    list: [],
+    error: false,
+  });
   const [more, setMore] = useState({ key: "", loading: false, error: false });
 
   const fullKey = JSON.stringify([q, category, sort, retry]);
@@ -97,6 +115,24 @@ export default function Discover() {
   const authorTerm = q.trim();
   const authorKey = JSON.stringify([authorTerm, authorRetry]);
   const wantsAuthors = authorTerm.length >= 2 && !category;
+
+  const localResult = useMemo(
+    () => (useLocal ? search(q, { category }) : { hits: [], facets: {} }),
+    [useLocal, q, category],
+  );
+
+  const localBooks = localResult.hits;
+
+  const facetList = useMemo(
+    () => Object.entries(localResult.facets).sort((a, b) => b[1] - a[1]),
+    [localResult],
+  );
+
+  const suggestion = useMemo(
+    () =>
+      useLocal && localBooks.length === 0 && !category ? didYouMean(q) : "",
+    [useLocal, localBooks, category, q],
+  );
 
   const update = useCallback(
     (changes) => {
@@ -129,7 +165,7 @@ export default function Discover() {
   useEffect(() => {
     if (draft === null) return;
     const t = setTimeout(() => {
-      update({ q: draft.trim() });
+      update({ q: draft.trim(), category: "" });
       remember(draft);
       setDraft(null);
     }, 450);
@@ -137,6 +173,7 @@ export default function Discover() {
   }, [draft, update, remember]);
 
   useEffect(() => {
+    if (searching) return;
     const ctrl = new AbortController();
 
     searchBooksPage(
@@ -181,7 +218,7 @@ export default function Discover() {
       });
 
     return () => ctrl.abort();
-  }, [q, category, sort, fullKey]);
+  }, [q, category, sort, fullKey, searching]);
 
   useEffect(() => {
     if (!wantsAuthors) return;
@@ -201,16 +238,33 @@ export default function Discover() {
     return () => ctrl.abort();
   }, [authorKey, authorTerm, wantsAuthors]);
 
-  const loading = data.key !== fullKey;
-  const books = loading ? [] : sortBooks(data.books, sort);
+  const loading = searching ? !ready : data.key !== fullKey;
+  const sortedLocal = useMemo(
+    () => sortBooks(localBooks, sort, true),
+    [localBooks, sort],
+  );
+  const localCount = shown.key === fullKey ? shown.count : LOCAL_PAGE;
+  const books = loading
+    ? []
+    : searching
+      ? sortedLocal.slice(0, localCount)
+      : sortBooks(data.books, sort);
+  const apiError = !searching && data.error;
+  const isDone = searching ? localCount >= sortedLocal.length : data.done;
   const authorsLoading = wantsAuthors && authorsData.key !== authorKey;
-  const authors = wantsAuthors && authorsData.key === authorKey ? authorsData.list : [];
+  const authors =
+    wantsAuthors && authorsData.key === authorKey ? authorsData.list : [];
   const authorsError =
     wantsAuthors && authorsData.key === authorKey && authorsData.error;
   const hasFilters = Boolean(q || category || sort);
+  const totalFacet = facetList.reduce((sum, [, n]) => sum + n, 0);
 
   async function loadMore() {
-    if ((more.key === fullKey && more.loading) || loading || data.done) return;
+    if (searching) {
+      setShown({ key: fullKey, count: localCount + LOCAL_PAGE });
+      return;
+    }
+    if ((more.key === fullKey && more.loading) || loading || isDone) return;
     setMore({ key: fullKey, loading: true, error: false });
     const key = fullKey;
 
@@ -254,14 +308,14 @@ export default function Discover() {
 
   const onSubmit = (e) => {
     e.preventDefault();
-    update({ q: value.trim() });
+    update({ q: value.trim(), category: "" });
     remember(value);
     setDraft(null);
   };
 
   const clearSearch = () => {
     setDraft(null);
-    update({ q: "" });
+    update({ q: "", category: "" });
   };
 
   const clearAll = () => {
@@ -271,7 +325,12 @@ export default function Discover() {
 
   const pickRecent = (term) => {
     setDraft(null);
-    update({ q: term });
+    update({ q: term, category: "" });
+  };
+
+  const pickCategory = (name) => {
+    setDraft(null);
+    setSearchParams({ category: name }, { replace: true });
   };
 
   const clearRecent = () => {
@@ -352,18 +411,37 @@ export default function Discover() {
           role="group"
           aria-label="Categories"
         >
-          <Chip active={!category} onClick={() => update({ category: "" })}>
-            All
-          </Chip>
-          {categories.map((c) => (
-            <Chip
-              key={c.name}
-              active={category === c.name}
-              onClick={() => update({ category: c.name })}
-            >
-              {c.name}
-            </Chip>
-          ))}
+          {searching ? (
+            <>
+              <Chip active={!category} onClick={() => update({ category: "" })}>
+                All ({totalFacet})
+              </Chip>
+              {facetList.map(([name, count]) => (
+                <Chip
+                  key={name}
+                  active={category === name}
+                  onClick={() => update({ category: name })}
+                >
+                  {name} ({count})
+                </Chip>
+              ))}
+            </>
+          ) : (
+            <>
+              <Chip active={!category} onClick={() => update({ category: "" })}>
+                All
+              </Chip>
+              {categories.map((c) => (
+                <Chip
+                  key={c.name}
+                  active={category === c.name}
+                  onClick={() => update({ category: c.name })}
+                >
+                  {c.name}
+                </Chip>
+              ))}
+            </>
+          )}
         </div>
 
         <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
@@ -396,7 +474,11 @@ export default function Discover() {
       </div>
 
       {authorsLoading && (
-        <p className="mt-10 text-sm text-muted" role="status" aria-live="polite">
+        <p
+          className="mt-10 text-sm text-muted"
+          role="status"
+          aria-live="polite"
+        >
           Looking for author matches…
         </p>
       )}
@@ -404,7 +486,8 @@ export default function Discover() {
       {authorsError && (
         <div className="mt-10 text-sm">
           <p className="text-burgundy">
-            Author matches could not be loaded. You can still browse the book results.
+            Author matches could not be loaded. You can still browse the book
+            results.
           </p>
           <button
             type="button"
@@ -451,7 +534,7 @@ export default function Discover() {
         </div>
       )}
 
-      {!loading && data.error && (
+      {!loading && apiError && (
         <div className="mt-10">
           <p className="text-burgundy">
             We could not load the books right now.
@@ -466,21 +549,55 @@ export default function Discover() {
         </div>
       )}
 
-      {!loading && !data.error && books.length === 0 && (
+      {!loading && !apiError && books.length === 0 && (
         <div className="mt-10 border border-line bg-white/50 px-6 py-14 text-center">
           <Icon
             icon="lucide:book-open"
             className="mx-auto h-8 w-8 text-gold-deep"
           />
           <h2 className="mt-4 text-2xl">No books found</h2>
+          {suggestion && (
+            <p className="mt-3 text-base">
+              Did you mean{" "}
+              <button
+                type="button"
+                onClick={() => {
+                  setDraft(null);
+                  update({ q: suggestion, category: "" });
+                }}
+                className="italic text-burgundy underline decoration-gold underline-offset-4"
+              >
+                {suggestion}
+              </button>
+              ?
+            </p>
+          )}
           <p className="mt-2 text-muted">
             Try a different title, author or subject, or remove a filter.
           </p>
+
+          <div className="mx-auto mt-10 max-w-xl">
+            <p className="text-[11px] uppercase tracking-[0.3em] text-gold-deep">
+              Browse by category
+            </p>
+            <div className="mt-4 flex flex-wrap justify-center gap-2">
+              {categories.map((c) => (
+                <Chip
+                  key={c.name}
+                  active={false}
+                  onClick={() => pickCategory(c.name)}
+                >
+                  {c.name}
+                </Chip>
+              ))}
+            </div>
+          </div>
+
           {hasFilters && (
             <button
               type="button"
               onClick={clearAll}
-              className="mt-6 bg-burgundy px-6 py-3 text-xs uppercase tracking-[0.2em] text-cream transition hover:bg-burgundy/90"
+              className="mt-8 bg-burgundy px-6 py-3 text-xs uppercase tracking-[0.2em] text-cream transition hover:bg-burgundy/90"
             >
               Clear all filters
             </button>
@@ -488,28 +605,34 @@ export default function Discover() {
         </div>
       )}
 
-      {!loading && !data.error && books.length > 0 && (
+      {!loading && !apiError && books.length > 0 && (
         <>
           <div className="mt-10 grid grid-cols-2 gap-4 md:grid-cols-4 md:gap-6">
             {books.map((book) => (
-              <BookCard key={book.id} book={book} />
+              <BookCard
+                key={book.id}
+                book={book}
+                terms={searching ? book.terms : []}
+              />
             ))}
           </div>
 
           <div className="mt-12 text-center">
-            {more.key === fullKey && more.error && (
+            {!searching && more.key === fullKey && more.error && (
               <p className="mb-3 text-sm text-burgundy">
                 We could not load more books.
               </p>
             )}
-            {!data.done && (
+            {!isDone && (
               <button
                 type="button"
                 onClick={loadMore}
-                disabled={more.key === fullKey && more.loading}
+                disabled={!searching && more.key === fullKey && more.loading}
                 className="border border-line px-8 py-3 text-xs uppercase tracking-[0.2em] transition hover:border-burgundy hover:text-burgundy disabled:opacity-50"
               >
-                {more.key === fullKey && more.loading ? "Loading…" : "Load more"}
+                {!searching && more.key === fullKey && more.loading
+                  ? "Loading…"
+                  : "Load more"}
               </button>
             )}
           </div>

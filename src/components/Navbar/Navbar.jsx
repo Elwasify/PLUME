@@ -1,7 +1,8 @@
 import { useState } from "react";
-import { Link, NavLink, useNavigate } from "react-router-dom";
+import { Link, NavLink } from "react-router-dom";
 import { Icon } from "@iconify/react";
 import Logo from "../Logo/Logo";
+import SearchBox from "../SearchBox/SearchBox";
 import { useShop } from "../../context/useShop";
 
 const links = [
@@ -13,18 +14,7 @@ const links = [
 
 export default function Navbar() {
   const [open, setOpen] = useState(false);
-  const [term, setTerm] = useState("");
-  const navigate = useNavigate();
   const { cartCount, wishlistCount } = useShop();
-
-  const onSearch = (e) => {
-    e.preventDefault();
-    const q = term.trim();
-    if (!q) return;
-    navigate(`/discover?q=${encodeURIComponent(q)}`);
-    setTerm("");
-    setOpen(false);
-  };
 
   const linkClass = ({ isActive }) =>
     `text-xs uppercase tracking-[0.2em] transition ${
@@ -43,10 +33,7 @@ export default function Navbar() {
       </div>
 
       <div className="mx-auto flex h-[72px] max-w-7xl items-center justify-between gap-4 px-6 md:h-20 md:px-10">
-        <Logo
-          className="-ml-2 shrink-0"
-          imageClassName="h-12 w-32"
-        />
+        <Logo className="-ml-2 shrink-0" imageClassName="h-12 w-32" />
 
         <nav className="hidden items-center gap-8 md:flex" aria-label="Main">
           {links.map((l) => (
@@ -62,20 +49,7 @@ export default function Navbar() {
         </nav>
 
         <div className="flex items-center gap-5">
-          <form
-            role="search"
-            onSubmit={onSearch}
-            className="hidden w-56 items-center border-b border-ink/30 focus-within:border-burgundy lg:flex"
-          >
-            <Icon icon="lucide:search" className="h-4 w-4 text-muted" />
-            <input
-              value={term}
-              onChange={(e) => setTerm(e.target.value)}
-              placeholder="Title, author, subject…"
-              aria-label="Search books"
-              className="w-full bg-transparent px-2 py-2 text-sm outline-none placeholder:text-muted"
-            />
-          </form>
+          <SearchBox className="hidden w-56 lg:block" />
 
           <Link
             to="/wishlist"
@@ -119,20 +93,10 @@ export default function Navbar() {
       </div>
 
       <div className="px-6 pb-3 md:px-10 lg:hidden">
-        <form
-          role="search"
-          onSubmit={onSearch}
-          className="mx-auto flex max-w-7xl items-center border-b border-ink/30 focus-within:border-burgundy"
-        >
-          <Icon icon="lucide:search" className="h-4 w-4 text-muted" />
-          <input
-            value={term}
-            onChange={(e) => setTerm(e.target.value)}
-            placeholder="Title, author, subject…"
-            aria-label="Search books"
-            className="w-full bg-transparent px-2 py-2 text-sm outline-none placeholder:text-muted"
-          />
-        </form>
+        <SearchBox
+          className="mx-auto max-w-7xl"
+          onDone={() => setOpen(false)}
+        />
       </div>
 
       {open && (

@@ -4,6 +4,7 @@ import { Icon } from "@iconify/react";
 import { formatPrice, toItem } from "../../context/shopUtils";
 import { useShop } from "../../context/useShop";
 import BookCover from "../BookCover/BookCover";
+import Highlight from "../Highlight/Highlight.jsx";
 import { getWikipediaBookInfo } from "../../api/wikipediaBooks";
 
 export default function BookCard({
@@ -11,6 +12,7 @@ export default function BookCard({
   showDescription = false,
   hideAuthor = false,
   lazyDescription = false,
+  terms = [],
 }) {
   const { addToCart, toggleWishlist, inWishlist, cartQty } = useShop();
   const navigate = useNavigate();
@@ -135,7 +137,7 @@ export default function BookCard({
           state={{ book: displayBook }}
           className="hover:underline"
         >
-          {info.title}
+          <Highlight text={info.title} terms={terms} />
         </Link>
       </h3>
 
@@ -150,7 +152,7 @@ export default function BookCard({
                     to={`/author/${encodeURIComponent(name)}`}
                     className="hover:text-burgundy hover:underline"
                   >
-                    {name}
+                    <Highlight text={name} terms={terms} />
                   </Link>
                 </span>
               ))}
