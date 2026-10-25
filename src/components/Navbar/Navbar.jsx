@@ -24,7 +24,7 @@ export default function Navbar() {
     }`;
 
   return (
-    <header className="relative z-40 bg-cream md:sticky md:top-0">
+    <header className="sticky top-0 z-40 bg-cream">
       <div className="border-b border-line">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-2 text-[10px] uppercase text-taupe md:px-10">
           <span>Librairie Plume — A literary world</span>
