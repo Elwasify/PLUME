@@ -51,7 +51,8 @@ export default function BookCard({
         }
       : book;
   const rating = info.averageRating;
-  const { price } = toItem(book);
+  const item = toItem(book);
+  const price = item ? item.price : null;
   const liked = inWishlist(book.id);
   const qty = cartQty(book.id);
   const needsWikipedia =
@@ -137,7 +138,7 @@ export default function BookCard({
           state={{ book: displayBook }}
           className="hover:underline"
         >
-          <Highlight text={info.title} terms={terms} />
+          <Highlight text={info.title || ""} terms={terms} />
         </Link>
       </h3>
 
@@ -182,7 +183,7 @@ export default function BookCard({
             <span />
           )}
           <span className="text-burgundy">
-            {formatPrice(price)}
+            {price === null ? "" : formatPrice(price)}
           </span>
         </div>
 

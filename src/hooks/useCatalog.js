@@ -24,10 +24,7 @@ export default function useCatalog() {
   const [state, setState] = useState({ ready: isReady, error: false });
 
   useEffect(() => {
-    if (isReady) {
-      setState({ ready: true, error: false });
-      return;
-    }
+    if (isReady) return;
     let alive = true;
     init()
       .then(() => alive && setState({ ready: true, error: false }))

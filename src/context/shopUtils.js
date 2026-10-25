@@ -1,4 +1,4 @@
-import { isLatinText, latinNames } from "../utils/text";
+import { latinNames } from "../utils/text";
 
 function demoPrice(id) {
   let h = 0;
@@ -15,7 +15,6 @@ export function toItem(book) {
       typeof book.title === "string" && book.title.trim()
         ? book.title.trim()
         : "Untitled";
-    if (!isLatinText(title)) return null;
     return {
       id: book.id.trim(),
       title,
@@ -24,9 +23,10 @@ export function toItem(book) {
         : typeof book.authors === "string" && book.authors.trim()
           ? latinNames([book.authors])
           : [],
-      cover: typeof book.cover === "string"
-        ? book.cover.replace(/^http:/, "https:")
-        : "",
+      cover:
+        typeof book.cover === "string"
+          ? book.cover.replace(/^http:/, "https:")
+          : "",
       price: Number.isFinite(price) && price >= 0 ? price : 0,
       demo: book.demo === true,
     };
@@ -41,15 +41,11 @@ export function toItem(book) {
     typeof info.title === "string" && info.title.trim()
       ? info.title.trim()
       : "Untitled";
-  if (!isLatinText(title)) return null;
   return {
     id: book.id,
     title,
-    authors: Array.isArray(info.authors)
-      ? latinNames(info.authors)
-      : [],
-    cover:
-      info.imageLinks?.thumbnail?.replace(/^http:/, "https:") || "",
+    authors: Array.isArray(info.authors) ? latinNames(info.authors) : [],
+    cover: info.imageLinks?.thumbnail?.replace(/^http:/, "https:") || "",
     price: real ? amount : demoPrice(book.id),
     demo: !real,
   };

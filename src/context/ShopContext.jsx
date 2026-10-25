@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import ShopContext from "./ShopContextValue";
 import { toItem } from "./shopUtils";
-import { isLatinText, latinNames } from "../utils/text";
+import { latinNames } from "../utils/text";
 
 const CART_KEY = "plume:cart";
 const WISHLIST_KEY = "plume:wishlist";
@@ -20,7 +20,7 @@ function read(key) {
 function normalizeItem(item) {
   if (!item || typeof item !== "object" || Array.isArray(item)) return null;
   if (typeof item.id !== "string" || !item.id.trim()) return null;
-  if (!isLatinText(item.title)) return null;
+  if (typeof item.title !== "string" || !item.title.trim()) return null;
 
   const price = Number(item.price);
   const authors = Array.isArray(item.authors)
@@ -75,7 +75,7 @@ function save(key, value) {
   try {
     localStorage.setItem(key, JSON.stringify(value));
   } catch {
-    // storage full or blocked: ignore
+    return;
   }
 }
 
@@ -116,6 +116,8 @@ export function ShopProvider({ children }) {
 
   const clearCart = () => setCart([]);
 
+  const clearWishlist = () => setWishlist([]);
+
   const toggleWishlist = (book) => {
     const item = toItem(book);
     if (!item) return;
@@ -138,6 +140,7 @@ export function ShopProvider({ children }) {
     removeFromCart,
     setQty,
     clearCart,
+    clearWishlist,
     toggleWishlist,
     inWishlist: (id) => wishlist.some((i) => i.id === id),
     cartQty: (id) => cart.find((i) => i.id === id)?.qty || 0,

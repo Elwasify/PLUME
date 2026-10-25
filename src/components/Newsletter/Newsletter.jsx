@@ -21,7 +21,10 @@ export default function Newsletter() {
         return;
       }
       localStorage.setItem("subscribers", JSON.stringify([...saved, value]));
-    } catch {}
+    } catch {
+      setStatus("storage-error");
+      return;
+    }
 
     setStatus("success");
     setEmail("");
@@ -78,6 +81,11 @@ export default function Newsletter() {
           )}
           {status === "duplicate" && (
             <span className="text-burgundy">You are already subscribed.</span>
+          )}
+          {status === "storage-error" && (
+            <span className="text-burgundy">
+              We could not save your email in this browser.
+            </span>
           )}
         </p>
       </div>
