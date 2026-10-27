@@ -2,7 +2,13 @@ import { requestJson } from "./request";
 import { isLatinText } from "../utils/text";
 
 const WRITER_RE =
-  /writer|author|novelist|poet|playwright|dramatist|essayist|philosopher|journalist|historian|critic|short story/i;
+  /\b(writer|author|novelist|poet|playwright|dramatist|essayist|philosopher|journalist|historian|critic|short story)/i;
+
+const fold = (text) =>
+  String(text || "")
+    .normalize("NFD")
+    .replace(/\p{M}/gu, "")
+    .toLowerCase();
 
 export async function searchAuthors(q = "", signal, limit = 3) {
   const term = String(q || "").trim();
@@ -12,7 +18,7 @@ export async function searchAuthors(q = "", signal, limit = 3) {
     action: "query",
     generator: "search",
     gsrsearch: term,
-    gsrlimit: "10",
+    gsrlimit: "25",
     gsrnamespace: "0",
     prop: "pageimages|description",
     piprop: "thumbnail",
@@ -27,6 +33,7 @@ export async function searchAuthors(q = "", signal, limit = 3) {
     { signal, ttl: 15 * 60 * 1000 },
   );
   const pages = Array.isArray(data?.query?.pages) ? data.query.pages : [];
+  const words = fold(term).split(/\s+/).filter(Boolean);
   const seen = new Set();
 
   return pages
@@ -44,9 +51,20 @@ export async function searchAuthors(q = "", signal, limit = 3) {
       seen.add(id);
       return WRITER_RE.test(page.description || "");
     })
-    .sort((a, b) => (a.index || 0) - (b.index || 0))
+    .map((page) => {
+      const title = fold(page.title);
+      return {
+        page,
+        titleMatch: words.every((word) => title.includes(word)),
+      };
+    })
+    .sort(
+      (a, b) =>
+        Number(b.titleMatch) - Number(a.titleMatch) ||
+        (a.page.index || 0) - (b.page.index || 0),
+    )
     .slice(0, Math.max(0, limit))
-    .map((page) => ({
+    .map(({ page }) => ({
       id: String(page.pageid),
       name: page.title.replace(/\s*\([^)]*\)\s*$/, "").trim(),
       description: page.description || "",

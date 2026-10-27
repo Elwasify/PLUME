@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { loadCatalog } from "../api/catalog";
 import { buildEngine } from "../utils/engine";
 
@@ -22,6 +22,7 @@ function init() {
 
 export default function useCatalog() {
   const [state, setState] = useState({ ready: isReady, error: false });
+  const [attempt, setAttempt] = useState(0);
 
   useEffect(() => {
     if (isReady) return;
@@ -32,7 +33,12 @@ export default function useCatalog() {
     return () => {
       alive = false;
     };
+  }, [attempt]);
+
+  const retry = useCallback(() => {
+    setState({ ready: false, error: false });
+    setAttempt((value) => value + 1);
   }, []);
 
-  return state;
+  return { ...state, retry };
 }

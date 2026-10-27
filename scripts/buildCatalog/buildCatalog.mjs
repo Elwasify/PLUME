@@ -71,6 +71,7 @@ const FEATURED_AUTHORS = [
   "Alexandre Dumas",
   "Thomas Hardy",
   "Miguel de Cervantes",
+  "Jenny Han",
 ];
 
 const ALIASES = {

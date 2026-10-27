@@ -109,6 +109,7 @@ export async function searchBooksPage(
   });
   if (orderBy === "newest") params.set("sort", "new");
   if (orderBy === "oldest") params.set("sort", "old");
+  if (orderBy === "title") params.set("sort", "title");
 
   const data = await requestJson(`${BASE}/search.json?${params}`, { signal });
   const totalValue = Number(data?.numFound ?? data?.num_found);
