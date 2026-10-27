@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { Icon } from "@iconify/react";
 import { formatPrice, toItem } from "../../context/shopUtils";
 import { useShop } from "../../context/useShop";
@@ -14,8 +14,14 @@ export default function BookCard({
   lazyDescription = false,
   terms = [],
 }) {
-  const { addToCart, toggleWishlist, inWishlist, cartQty } = useShop();
-  const navigate = useNavigate();
+  const {
+    addToCart,
+    removeFromCart,
+    setQty,
+    toggleWishlist,
+    inWishlist,
+    cartQty,
+  } = useShop();
   const [feedback, setFeedback] = useState("");
   const [wikiInfo, setWikiInfo] = useState({ id: "", data: null });
   const [inView, setInView] = useState(false);
@@ -37,19 +43,18 @@ export default function BookCard({
     description.length > 160
       ? `${description.slice(0, 157).trimEnd()}…`
       : description;
-  const displayBook =
-    wikipediaInfo
-      ? {
-          ...book,
-          volumeInfo: {
-            ...info,
-            description: info.description || wikipediaInfo.extract,
-            imageLinks: info.imageLinks || {
-              thumbnail: wikipediaInfo.thumbnail?.source,
-            },
+  const displayBook = wikipediaInfo
+    ? {
+        ...book,
+        volumeInfo: {
+          ...info,
+          description: info.description || wikipediaInfo.extract,
+          imageLinks: info.imageLinks || {
+            thumbnail: wikipediaInfo.thumbnail?.source,
           },
-        }
-      : book;
+        },
+      }
+    : book;
   const rating = info.averageRating;
   const item = toItem(book);
   const price = item ? item.price : null;
@@ -60,11 +65,7 @@ export default function BookCard({
     wikiInfo.id !== book.id;
 
   useEffect(() => {
-    if (
-      (!needsWikipedia && !lazyDescription) ||
-      inView ||
-      !cardRef.current
-    ) {
+    if ((!needsWikipedia && !lazyDescription) || inView || !cardRef.current) {
       return undefined;
     }
     const observer = new IntersectionObserver(
@@ -87,7 +88,10 @@ export default function BookCard({
       })
       .catch((error) => {
         if (error.name !== "AbortError") {
-          console.warn(`Unable to load Wikipedia details for ${info.title}:`, error);
+          console.warn(
+            `Unable to load Wikipedia details for ${info.title}:`,
+            error,
+          );
         }
       });
 
@@ -187,23 +191,51 @@ export default function BookCard({
           </span>
         </div>
 
-        <button
-          type="button"
-          onClick={() => {
-            if (qty > 0) {
-              navigate("/cart");
-              return;
-            }
-            if (addToCart(book)) setFeedback("Added to bag");
-          }}
-          className="mt-3 flex h-10 w-full items-center justify-center gap-2 border border-line text-[11px] uppercase tracking-[0.2em] transition hover:border-burgundy hover:text-burgundy"
-        >
-          <Icon
-            icon={qty > 0 ? "lucide:check" : "lucide:shopping-bag"}
-            className="h-3.5 w-3.5"
-          />
-          {qty > 0 ? "In bag" : "Add to bag"}
-        </button>
+        {qty > 0 ? (
+          <div className="mt-3 flex h-10 w-full items-center justify-between border border-burgundy text-burgundy">
+            <button
+              type="button"
+              onClick={() => {
+                if (qty <= 1) {
+                  removeFromCart(book.id);
+                  setFeedback(`${info.title} removed from your bag.`);
+                } else {
+                  setQty(book.id, qty - 1);
+                }
+              }}
+              aria-label={qty <= 1 ? "Remove from bag" : "Decrease quantity"}
+              className="flex h-full w-10 items-center justify-center transition hover:bg-burgundy/5"
+            >
+              <Icon
+                icon={qty <= 1 ? "lucide:trash-2" : "lucide:minus"}
+                className="h-4 w-4"
+              />
+            </button>
+            <span className="font-['Inter',sans-serif] text-[11px] uppercase tracking-[0.15em]">
+              {qty} in bag
+            </span>
+            <button
+              type="button"
+              onClick={() => setQty(book.id, qty + 1)}
+              disabled={qty >= 99}
+              aria-label="Increase quantity"
+              className="flex h-full w-10 items-center justify-center transition hover:bg-burgundy/5 disabled:opacity-40"
+            >
+              <Icon icon="lucide:plus" className="h-4 w-4" />
+            </button>
+          </div>
+        ) : (
+          <button
+            type="button"
+            onClick={() => {
+              if (addToCart(book)) setFeedback("Added to bag");
+            }}
+            className="mt-3 flex h-10 w-full items-center justify-center gap-2 border border-line text-[11px] uppercase tracking-[0.2em] transition hover:border-burgundy hover:text-burgundy"
+          >
+            <Icon icon="lucide:shopping-bag" className="h-3.5 w-3.5" />
+            Add to bag
+          </button>
+        )}
         <p className="sr-only" role="status" aria-live="polite">
           {feedback}
         </p>

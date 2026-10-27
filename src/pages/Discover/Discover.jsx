@@ -9,11 +9,13 @@ import { searchBooksPage } from "../../api/books";
 import { searchAuthors } from "../../api/authors";
 import usePageTitle from "../../hooks/usePageTitle";
 import useCatalog from "../../hooks/useCatalog";
-import { search, didYouMean } from "../../utils/engine";
+import { search, didYouMean, searchAuthorsLocal } from "../../utils/engine";
 
 const LIMIT = 20;
 const LOCAL_PAGE = 12;
+const EXTRA_MIN = 8;
 const RECENT_KEY = "plume:recent-searches";
+const RECENT_EVENT = "plume:recent-changed";
 
 const SORTS = [
   { value: "", label: "Relevance" },
@@ -44,6 +46,47 @@ function sortBooks(books, sort, local = false) {
   return books;
 }
 
+function bookKey(book) {
+  const info = book.volumeInfo || {};
+  const title = (info.title || "").toLowerCase().replace(/[^a-z0-9]/g, "");
+  const author = ((info.authors && info.authors[0]) || "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, "");
+  return `${title}|${author}`;
+}
+
+function mergeBooks(local, extra) {
+  const ids = new Set(local.map((b) => b.id));
+  const keys = new Set(local.map(bookKey));
+  const result = [...local];
+  const indexByKey = new Map();
+
+  extra.forEach((book) => {
+    const key = bookKey(book);
+    if (ids.has(book.id)) return;
+
+    if (keys.has(key)) {
+      const at = indexByKey.get(key);
+      if (at === undefined) return;
+      const current = result[at];
+      const currentHasCover = Boolean(current.volumeInfo?.imageLinks);
+      const nextHasCover = Boolean(book.volumeInfo?.imageLinks);
+      if (!currentHasCover && nextHasCover) {
+        ids.add(book.id);
+        result[at] = book;
+      }
+      return;
+    }
+
+    ids.add(book.id);
+    keys.add(key);
+    indexByKey.set(key, result.length);
+    result.push(book);
+  });
+
+  return result;
+}
+
 function loadRecent() {
   try {
     const parsed = JSON.parse(localStorage.getItem(RECENT_KEY));
@@ -61,6 +104,7 @@ function saveRecent(list) {
   } catch {
     return;
   }
+  window.dispatchEvent(new Event(RECENT_EVENT));
 }
 
 function Chip({ active, onClick, children }) {
@@ -86,9 +130,10 @@ export default function Discover() {
   const category = searchParams.get("category") || "";
   const sort = searchParams.get("sort") || "";
 
-  const { ready } = useCatalog();
+  const { ready, error: catalogError, retry: retryCatalog } = useCatalog();
   const searching = q.trim().length >= 2;
   const useLocal = searching && ready;
+  const catalogFailed = searching && !ready && catalogError;
 
   const [draft, setDraft] = useState(null);
   const [recent, setRecent] = useState(loadRecent);
@@ -109,6 +154,7 @@ export default function Discover() {
     list: [],
     error: false,
   });
+  const [extra, setExtra] = useState({ key: "", books: [] });
   const [more, setMore] = useState({ key: "", loading: false, error: false });
 
   const fullKey = JSON.stringify([q, category, sort, retry]);
@@ -123,6 +169,7 @@ export default function Discover() {
   );
 
   const localBooks = localResult.hits;
+  const needsExtra = useLocal && !category && localBooks.length < EXTRA_MIN;
 
   const facetList = useMemo(
     () => Object.entries(localResult.facets).sort((a, b) => b[1] - a[1]),
@@ -164,6 +211,16 @@ export default function Discover() {
   usePageTitle(q ? `${q} — Discover` : "Discover");
 
   useEffect(() => {
+    const sync = () => setRecent(loadRecent());
+    window.addEventListener(RECENT_EVENT, sync);
+    window.addEventListener("storage", sync);
+    return () => {
+      window.removeEventListener(RECENT_EVENT, sync);
+      window.removeEventListener("storage", sync);
+    };
+  }, []);
+
+  useEffect(() => {
     if (draft === null) return;
     const t = setTimeout(() => {
       update({ q: draft.trim(), category: "" });
@@ -181,7 +238,7 @@ export default function Discover() {
       {
         q,
         category,
-        orderBy: sort === "alphabetical" ? "relevance" : sort || "relevance",
+        orderBy: sort === "alphabetical" ? "title" : sort || "relevance",
         offset: 0,
         limit: LIMIT,
       },
@@ -225,11 +282,37 @@ export default function Discover() {
     if (!wantsAuthors) return;
     const ctrl = new AbortController();
 
-    searchAuthors(authorTerm, ctrl.signal, 3)
-      .then((list) => {
-        if (!ctrl.signal.aborted) {
-          setAuthorsData({ key: authorKey, list, error: false });
-        }
+    const localNames = ready ? searchAuthorsLocal(authorTerm, 2) : [];
+
+    const localLookups = localNames.map((name) =>
+      searchAuthors(name, ctrl.signal, 1)
+        .then((found) =>
+          found[0]
+            ? found[0]
+            : { id: `local-${name}`, name, description: "", thumbnail: "" },
+        )
+        .catch((err) => {
+          if (err.name === "AbortError") throw err;
+          return { id: `local-${name}`, name, description: "", thumbnail: "" };
+        }),
+    );
+
+    Promise.all([
+      Promise.all(localLookups),
+      searchAuthors(authorTerm, ctrl.signal, 3),
+    ])
+      .then(([localList, wikiList]) => {
+        if (ctrl.signal.aborted) return;
+        const seen = new Set();
+        const list = [...localList, ...wikiList]
+          .filter((a) => {
+            const key = a.name.toLowerCase();
+            if (seen.has(key)) return false;
+            seen.add(key);
+            return true;
+          })
+          .slice(0, 4);
+        setAuthorsData({ key: authorKey, list, error: false });
       })
       .catch((err) => {
         if (err.name === "AbortError") return;
@@ -237,19 +320,57 @@ export default function Discover() {
       });
 
     return () => ctrl.abort();
-  }, [authorKey, authorTerm, wantsAuthors]);
+  }, [authorKey, authorTerm, wantsAuthors, ready]);
 
-  const loading = searching ? !ready : data.key !== fullKey;
+  useEffect(() => {
+    if (!needsExtra) return;
+    const ctrl = new AbortController();
+
+    searchBooksPage(
+      {
+        q,
+        category: "",
+        orderBy: "relevance",
+        offset: 0,
+        limit: LIMIT,
+      },
+      ctrl.signal,
+    )
+      .then((result) => {
+        if (ctrl.signal.aborted) return;
+        setExtra({ key: q, books: result.books });
+      })
+      .catch((err) => {
+        if (err.name === "AbortError") return;
+        setExtra({ key: q, books: [] });
+      });
+
+    return () => ctrl.abort();
+  }, [needsExtra, q]);
+
+  const extraLoading = needsExtra && extra.key !== q;
+  const extraBooks = useMemo(
+    () => (needsExtra && extra.key === q ? extra.books : []),
+    [needsExtra, extra, q],
+  );
+
+  const mergedBooks = useMemo(
+    () => mergeBooks(localBooks, extraBooks),
+    [localBooks, extraBooks],
+  );
+
+  const loading = searching ? !ready && !catalogError : data.key !== fullKey;
   const sortedLocal = useMemo(
-    () => sortBooks(localBooks, sort, true),
-    [localBooks, sort],
+    () => sortBooks(mergedBooks, sort, true),
+    [mergedBooks, sort],
   );
   const localCount = shown.key === fullKey ? shown.count : LOCAL_PAGE;
   const books = loading
     ? []
     : searching
       ? sortedLocal.slice(0, localCount)
-      : sortBooks(data.books, sort);
+      : data.books;
+  const showSkeleton = loading || (extraLoading && books.length === 0);
   const apiError = !searching && data.error;
   const isDone = searching ? localCount >= sortedLocal.length : data.done;
   const authorsLoading = wantsAuthors && authorsData.key !== authorKey;
@@ -259,6 +380,7 @@ export default function Discover() {
     wantsAuthors && authorsData.key === authorKey && authorsData.error;
   const hasFilters = Boolean(q || category || sort);
   const totalFacet = facetList.reduce((sum, [, n]) => sum + n, 0);
+  const allCount = category ? totalFacet : mergedBooks.length;
 
   async function loadMore() {
     if (searching) {
@@ -273,7 +395,7 @@ export default function Discover() {
       const result = await searchBooksPage({
         q,
         category,
-        orderBy: sort === "alphabetical" ? "relevance" : sort || "relevance",
+        orderBy: sort === "alphabetical" ? "title" : sort || "relevance",
         offset: data.page * LIMIT,
         limit: LIMIT,
       });
@@ -338,6 +460,12 @@ export default function Discover() {
     setRecent([]);
   };
 
+  const removeRecent = (term) => {
+    const next = loadRecent().filter((s) => s !== term);
+    saveRecent(next);
+    setRecent(next);
+  };
+
   const heading = q ? (
     <>
       Results for <em className="text-burgundy">“{q}”</em>
@@ -371,14 +499,26 @@ export default function Discover() {
         <div className="mt-4 flex flex-wrap items-center gap-2 text-sm">
           <span className="text-muted">Recent:</span>
           {recent.map((term) => (
-            <button
+            <span
               key={term}
-              type="button"
-              onClick={() => pickRecent(term)}
-              className="border border-line px-3 py-1 transition hover:border-burgundy hover:text-burgundy"
+              className="inline-flex items-center border border-line transition hover:border-burgundy"
             >
-              {term}
-            </button>
+              <button
+                type="button"
+                onClick={() => pickRecent(term)}
+                className="px-3 py-1 transition hover:text-burgundy"
+              >
+                {term}
+              </button>
+              <button
+                type="button"
+                onClick={() => removeRecent(term)}
+                aria-label={`Remove ${term} from recent searches`}
+                className="flex h-full items-center px-2 text-muted transition hover:text-burgundy"
+              >
+                <Icon icon="lucide:x" className="h-3.5 w-3.5" />
+              </button>
+            </span>
           ))}
           <button
             type="button"
@@ -399,7 +539,7 @@ export default function Discover() {
           {searching ? (
             <>
               <Chip active={!category} onClick={() => update({ category: "" })}>
-                All ({totalFacet})
+                All ({allCount})
               </Chip>
               {facetList.map(([name, count]) => (
                 <Chip
@@ -511,11 +651,27 @@ export default function Discover() {
         </div>
       )}
 
-      {loading && (
+      {showSkeleton && (
         <div className="mt-10 grid grid-cols-2 gap-4 md:grid-cols-4 md:gap-6">
           {Array.from({ length: 8 }).map((_, i) => (
             <div key={i} className="aspect-[2/3] animate-pulse bg-gold/20" />
           ))}
+        </div>
+      )}
+
+      {catalogFailed && (
+        <div className="mt-10">
+          <p className="text-burgundy">
+            Search is unavailable right now. The book catalog could not be
+            loaded.
+          </p>
+          <button
+            type="button"
+            onClick={retryCatalog}
+            className="mt-4 border border-line px-5 py-2 text-xs uppercase tracking-[0.2em] transition hover:border-burgundy hover:text-burgundy"
+          >
+            Try again
+          </button>
         </div>
       )}
 
@@ -534,7 +690,7 @@ export default function Discover() {
         </div>
       )}
 
-      {!loading && !apiError && books.length === 0 && (
+      {!showSkeleton && !apiError && !catalogFailed && books.length === 0 && (
         <div className="mt-10 border border-line bg-white/50 px-6 py-14 text-center">
           <Icon
             icon="lucide:book-open"
@@ -597,10 +753,20 @@ export default function Discover() {
               <BookCard
                 key={book.id}
                 book={book}
-                terms={searching ? book.terms : []}
+                terms={searching ? book.terms || [] : []}
               />
             ))}
           </div>
+
+          {extraLoading && (
+            <p
+              className="mt-8 text-center text-sm text-muted"
+              role="status"
+              aria-live="polite"
+            >
+              Looking for more books…
+            </p>
+          )}
 
           <div className="mt-12 text-center">
             {!searching && more.key === fullKey && more.error && (

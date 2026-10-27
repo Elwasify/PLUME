@@ -11,7 +11,7 @@ import { isLatinText } from "../../utils/text";
 const INITIAL_WORKS_LIMIT = 12;
 
 const WRITER_RE =
-  /writer|author|novelist|poet|playwright|dramatist|essayist|philosopher|journalist|historian|critic|short story/i;
+  /\b(writer|author|novelist|poet|playwright|dramatist|essayist|philosopher|journalist|historian|critic|short story)/i;
 
 async function fetchSummary(title, signal) {
   const d = await requestJson(

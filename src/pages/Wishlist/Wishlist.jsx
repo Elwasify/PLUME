@@ -11,7 +11,7 @@ export default function Wishlist() {
     wishlist,
     toggleWishlist,
     clearWishlist,
-    moveToCart,
+    addToCart,
     cartQty,
     inWishlist,
   } = useShop();
@@ -48,11 +48,15 @@ export default function Wishlist() {
     setRemovedBook(null);
   };
 
-  const moveBookToBag = (book) => {
+  const addBookToBag = (book) => {
     window.clearTimeout(timeoutRef.current);
     setRemovedBook(null);
-    moveToCart(book);
-    setMessage(`${book.title} moved to your bag.`);
+    if (cartQty(book.id) > 0) {
+      setMessage(`${book.title} is already in your bag.`);
+      return;
+    }
+    addToCart(book);
+    setMessage(`${book.title} added to your bag.`);
   };
 
   const confirmClearAll = () => {
@@ -155,14 +159,15 @@ export default function Wishlist() {
 
                     <button
                       type="button"
-                      onClick={() => moveBookToBag(b)}
-                      className="mt-3 flex h-10 w-full items-center justify-center gap-2 border border-line text-[11px] uppercase tracking-[0.2em] transition hover:border-burgundy hover:text-burgundy"
+                      onClick={() => addBookToBag(b)}
+                      disabled={qty > 0}
+                      className="mt-3 flex h-10 w-full items-center justify-center gap-2 border border-line text-[11px] uppercase tracking-[0.2em] transition hover:border-burgundy hover:text-burgundy disabled:cursor-default disabled:border-burgundy/30 disabled:text-burgundy disabled:hover:border-burgundy/30"
                     >
                       <Icon
                         icon={qty > 0 ? "lucide:check" : "lucide:shopping-bag"}
                         className="h-3.5 w-3.5"
                       />
-                      Move to bag
+                      {qty > 0 ? `In bag (${qty})` : "Add to bag"}
                     </button>
                   </div>
                 </article>

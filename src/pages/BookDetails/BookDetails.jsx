@@ -39,7 +39,14 @@ export default function BookDetails() {
   const navigate = useNavigate();
   const location = useLocation();
   const { book: loadedBook, loading, error, retry } = useBook(id);
-  const { addToCart, toggleWishlist, inWishlist, cartQty } = useShop();
+  const {
+    addToCart,
+    removeFromCart,
+    setQty,
+    toggleWishlist,
+    inWishlist,
+    cartQty,
+  } = useShop();
   const [rel, setRel] = useState({ id: "", list: [] });
   const [wikiRes, setWikiRes] = useState({ id: "", data: null });
   const [actionMessage, setActionMessage] = useState("");
@@ -60,7 +67,10 @@ export default function BookDetails() {
       })
       .catch((requestError) => {
         if (requestError.name !== "AbortError") {
-          console.warn(`Unable to load Wikipedia details for ${info.title}:`, requestError);
+          console.warn(
+            `Unable to load Wikipedia details for ${info.title}:`,
+            requestError,
+          );
         }
       });
 
@@ -74,8 +84,7 @@ export default function BookDetails() {
           ...sourceBook,
           volumeInfo: {
             ...sourceBook.volumeInfo,
-            description:
-              sourceBook.volumeInfo.description || wikiInfo.extract,
+            description: sourceBook.volumeInfo.description || wikiInfo.extract,
             imageLinks: sourceBook.volumeInfo.imageLinks || {
               thumbnail: wikiInfo.thumbnail?.source,
             },
@@ -102,8 +111,7 @@ export default function BookDetails() {
         });
       })
       .catch((e) => {
-        if (e.name !== "AbortError")
-          setRel({ id: sourceBook.id, list: [] });
+        if (e.name !== "AbortError") setRel({ id: sourceBook.id, list: [] });
       });
 
     return () => ctrl.abort();
@@ -190,7 +198,9 @@ export default function BookDetails() {
   const details = [
     { label: "Publisher in this edition", value: info.publisher },
     {
-      label: info.publicationFromEdition ? "Edition published" : "First publication",
+      label: info.publicationFromEdition
+        ? "Edition published"
+        : "First publication",
       value: info.publishedDate,
     },
     { label: "Pages in this edition", value: info.pageCount },
@@ -213,13 +223,18 @@ export default function BookDetails() {
         ? category.split(",").map((part) => part.trim())
         : [],
     )
-    .filter((category) => category && category.length <= 30 && !/[()]/.test(category));
+    .filter(
+      (category) => category && category.length <= 30 && !/[()]/.test(category),
+    );
   const uniqueCategories = [...new Set(categoryParts)];
   const categories = uniqueCategories
     .sort((a, b) => {
       const aIndex = preferredCategories.indexOf(a);
       const bIndex = preferredCategories.indexOf(b);
-      return (aIndex === -1 ? Infinity : aIndex) - (bIndex === -1 ? Infinity : bIndex);
+      return (
+        (aIndex === -1 ? Infinity : aIndex) -
+        (bIndex === -1 ? Infinity : bIndex)
+      );
     })
     .slice(0, 3);
 
@@ -287,23 +302,53 @@ export default function BookDetails() {
           </p>
 
           <div className="mt-6 flex flex-wrap gap-3">
-            <button
-              type="button"
-              onClick={() => {
-                if (qty > 0) {
-                  navigate("/cart");
-                  return;
-                }
-                if (addToCart(book)) setActionMessage("Added to bag");
-              }}
-              className="flex items-center justify-center gap-2 bg-burgundy px-7 py-3.5 text-xs uppercase tracking-[0.2em] text-cream transition hover:bg-burgundy/90"
-            >
-              <Icon
-                icon={qty > 0 ? "lucide:check" : "lucide:shopping-bag"}
-                className="h-4 w-4"
-              />
-              {qty > 0 ? "In bag" : "Add to bag"}
-            </button>
+            {qty > 0 ? (
+              <div className="flex h-[50px] min-w-[200px] items-center justify-between border border-burgundy text-burgundy">
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (qty <= 1) {
+                      removeFromCart(book.id);
+                      setActionMessage(`${info.title} removed from your bag.`);
+                    } else {
+                      setQty(book.id, qty - 1);
+                    }
+                  }}
+                  aria-label={
+                    qty <= 1 ? "Remove from bag" : "Decrease quantity"
+                  }
+                  className="flex h-full w-12 items-center justify-center transition hover:bg-burgundy/5"
+                >
+                  <Icon
+                    icon={qty <= 1 ? "lucide:trash-2" : "lucide:minus"}
+                    className="h-4 w-4"
+                  />
+                </button>
+                <span className="font-['Inter',sans-serif] text-xs uppercase tracking-[0.15em]">
+                  {qty} in bag
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setQty(book.id, qty + 1)}
+                  disabled={qty >= 99}
+                  aria-label="Increase quantity"
+                  className="flex h-full w-12 items-center justify-center transition hover:bg-burgundy/5 disabled:opacity-40"
+                >
+                  <Icon icon="lucide:plus" className="h-4 w-4" />
+                </button>
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={() => {
+                  if (addToCart(book)) setActionMessage("Added to bag");
+                }}
+                className="flex items-center justify-center gap-2 bg-burgundy px-7 py-3.5 text-xs uppercase tracking-[0.2em] text-cream transition hover:bg-burgundy/90"
+              >
+                <Icon icon="lucide:shopping-bag" className="h-4 w-4" />
+                Add to bag
+              </button>
+            )}
             <button
               type="button"
               onClick={() => {
@@ -324,7 +369,11 @@ export default function BookDetails() {
               {liked ? "In wishlist" : "Add to wishlist"}
             </button>
           </div>
-          <p role="status" aria-live="polite" className="mt-3 min-h-5 text-sm text-muted">
+          <p
+            role="status"
+            aria-live="polite"
+            className="mt-3 min-h-5 text-sm text-muted"
+          >
             {actionMessage}
           </p>
 
@@ -395,7 +444,6 @@ export default function BookDetails() {
           )}
         </section>
       )}
-
     </div>
   );
 }
