@@ -3,10 +3,8 @@ const LATIN_SCRIPT_RE = /^\p{Script=Latin}$/u;
 export function isLatinText(value) {
   if (typeof value !== "string" || !value.trim()) return false;
   const letters = value.match(/\p{L}/gu) || [];
-  return (
-    letters.length > 0 &&
-    letters.every((letter) => LATIN_SCRIPT_RE.test(letter))
-  );
+  if (letters.length === 0) return /\p{N}/u.test(value);
+  return letters.every((letter) => LATIN_SCRIPT_RE.test(letter));
 }
 
 export function latinNames(values) {
