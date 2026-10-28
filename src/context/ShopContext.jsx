@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import ShopContext from "./ShopContextValue";
 import { toItem } from "./shopUtils";
 import { latinNames } from "../utils/text";
+import { calculateCartTotal, getBookPrice } from "../data/bookPricing";
 
 const CART_KEY = "plume:cart";
 const WISHLIST_KEY = "plume:wishlist";
@@ -22,7 +23,6 @@ function normalizeItem(item) {
   if (typeof item.id !== "string" || !item.id.trim()) return null;
   if (typeof item.title !== "string" || !item.title.trim()) return null;
 
-  const price = Number(item.price);
   const authors = Array.isArray(item.authors)
     ? latinNames(item.authors)
     : typeof item.authors === "string" && item.authors.trim()
@@ -37,8 +37,7 @@ function normalizeItem(item) {
       typeof item.cover === "string"
         ? item.cover.replace(/^http:/, "https:")
         : "",
-    price: Number.isFinite(price) && price >= 0 ? price : 0,
-    demo: item.demo === true,
+    price: getBookPrice(item.id),
   };
 }
 
@@ -133,8 +132,7 @@ export function ShopProvider({ children }) {
     wishlist,
     cartCount: cart.reduce((n, i) => n + i.qty, 0),
     wishlistCount: wishlist.length,
-    cartTotal:
-      Math.round(cart.reduce((s, i) => s + i.price * i.qty, 0) * 100) / 100,
+    cartTotal: calculateCartTotal(cart),
     addToCart,
     moveToCart,
     removeFromCart,
