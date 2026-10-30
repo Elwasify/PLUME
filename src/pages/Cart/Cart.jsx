@@ -4,6 +4,7 @@ import { Icon } from "@iconify/react";
 import { formatPrice } from "../../context/shopUtils";
 import { useShop } from "../../context/useShop";
 import BookCover from "../../components/BookCover/BookCover";
+import CheckoutSteps from "../../components/CheckoutSteps/CheckoutSteps";
 import usePageTitle from "../../hooks/usePageTitle";
 
 export default function Cart() {
@@ -15,6 +16,9 @@ export default function Cart() {
 
   return (
     <section className="mx-auto max-w-6xl px-6 py-12 md:py-20">
+      <div className="mb-8 flex justify-end">
+        <CheckoutSteps current={1} />
+      </div>
       <p className="text-[11px] uppercase tracking-[0.3em] text-gold-deep">
         Your selection
       </p>

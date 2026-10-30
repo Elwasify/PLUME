@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Icon } from "@iconify/react";
 import BookCover from "../../components/BookCover/BookCover";
+import CheckoutSteps from "../../components/CheckoutSteps/CheckoutSteps";
 import { useShop } from "../../context/useShop";
 import { formatPrice } from "../../context/shopUtils";
 import usePageTitle from "../../hooks/usePageTitle";
@@ -25,97 +26,100 @@ const contactFields = [
 
 const addressFields = [
   {
+    name: "city",
+    label: "City",
+    autoComplete: "address-level2",
+  },
+  {
     name: "address",
     label: "Street address",
     autoComplete: "street-address",
     wide: true,
   },
-  { name: "city", label: "City", autoComplete: "address-level2" },
-  { name: "country", label: "Country", autoComplete: "country-name" },
 ];
 
-const countries = [
-  "Egypt",
-  "Saudi Arabia",
-  "United Arab Emirates",
-  "Kuwait",
-  "Qatar",
-  "Jordan",
-  "Lebanon",
-  "Morocco",
-  "United Kingdom",
-  "United States",
-  "France",
-  "Germany",
-  "Canada",
-  "Other",
+const governorates = [
+  "Cairo",
+  "Alexandria",
+  "Port Said",
+  "Suez",
+  "Damietta",
+  "Dakahlia",
+  "Sharkia",
+  "Qalyubia",
+  "Kafr El Sheikh",
+  "Gharbia",
+  "Monufia",
+  "Beheira",
+  "Ismailia",
+  "Giza",
+  "Beni Suef",
+  "Fayoum",
+  "Minya",
+  "Assiut",
+  "Sohag",
+  "Qena",
+  "Aswan",
+  "Luxor",
+  "Red Sea",
+  "New Valley",
+  "Matrouh",
+  "North Sinai",
+  "South Sinai",
 ];
 
-const methods = {
-  card: {
-    label: "Bank card",
-    hint: "Visa, Mastercard, and supported cards",
-    icon: "lucide:credit-card",
-  },
-  wallet: {
-    label: "Mobile wallet",
-    hint: "Pay with a supported wallet",
-    icon: "lucide:smartphone",
-  },
-};
-
-const stepNames = ["Bag", "Details", "Confirmation"];
-
-const phonePattern = /^[+\d][\d\s-]{6,18}$/;
+const phonePattern = /^\+?[0-9]{10,15}$/;
+const SHIPPING_KEY = "plume:last-shipping";
+const PAYMENT_DRAFT_KEY = "plume:payment-draft";
 
 const inputClass =
   "mt-2 w-full border border-line bg-cream px-3 py-3 text-sm outline-none transition placeholder:text-muted/70 focus:border-burgundy focus:ring-2 focus:ring-burgundy/15";
 
-function Steps({ current }) {
-  return (
-    <ol className="flex items-center" aria-label="Checkout progress">
-      {stepNames.map((name, index) => {
-        const number = index + 1;
-        const done = number < current || current === 3;
-        const active = number === current && current !== 3;
-        return (
-          <li key={name} className="flex items-center">
-            <span
-              className={`flex h-7 w-7 items-center justify-center rounded-full border text-[11px] font-['Inter',sans-serif] ${
-                done
-                  ? "border-burgundy bg-burgundy text-cream"
-                  : active
-                    ? "border-burgundy text-burgundy"
-                    : "border-line text-muted"
-              }`}
-              aria-current={active ? "step" : undefined}
-            >
-              {done ? (
-                <Icon icon="lucide:check" className="h-3.5 w-3.5" />
-              ) : (
-                number
-              )}
-            </span>
-            <span
-              className={`ml-2 text-[10px] uppercase tracking-[0.18em] ${
-                done || active ? "text-burgundy" : "text-muted"
-              }`}
-            >
-              {name}
-            </span>
-            {number < stepNames.length && (
-              <span
-                aria-hidden="true"
-                className={`mx-3 h-px w-6 sm:w-12 ${
-                  number < current || current === 3 ? "bg-burgundy" : "bg-line"
-                }`}
-              />
-            )}
-          </li>
-        );
-      })}
-    </ol>
-  );
+function readDraft() {
+  const defaults = {
+    firstName: "",
+    lastName: "",
+    email: "",
+    phone: "",
+    address: "",
+    governorate: "",
+    city: "",
+    country: "Egypt",
+  };
+
+  try {
+    const saved = JSON.parse(sessionStorage.getItem(PAYMENT_DRAFT_KEY) || "null");
+    if (!saved || typeof saved !== "object") return defaults;
+    const savedCity = typeof saved.city === "string" ? saved.city : "";
+    return {
+      firstName: typeof saved.firstName === "string" ? saved.firstName : "",
+      lastName: typeof saved.lastName === "string" ? saved.lastName : "",
+      email: typeof saved.email === "string" ? saved.email : "",
+      phone: typeof saved.phone === "string" ? saved.phone : "",
+      address: typeof saved.address === "string" ? saved.address : "",
+      governorate:
+        typeof saved.governorate === "string" &&
+        governorates.includes(saved.governorate)
+          ? saved.governorate
+          : governorates.includes(savedCity)
+            ? savedCity
+            : "",
+      city: governorates.includes(savedCity)
+        ? ""
+        : savedCity,
+      country: "Egypt",
+    };
+  } catch {
+    return defaults;
+  }
+}
+
+function saveDraft(draft) {
+  try {
+    sessionStorage.setItem(PAYMENT_DRAFT_KEY, JSON.stringify(draft));
+  } catch {
+    void 0;
+  }
 }
 
 function SectionTitle({ number, title }) {
@@ -130,15 +134,30 @@ function SectionTitle({ number, title }) {
 }
 
 export default function Payment() {
-  const { cart, cartCount, cartTotal, clearCart } = useShop();
-  const [method, setMethod] = useState("card");
+  const { cart, cartCount, cartTotal } = useShop();
+  const [formData, setFormData] = useState(readDraft);
   const [errors, setErrors] = useState({});
-  const [order, setOrder] = useState(null);
+  const [submitting, setSubmitting] = useState(false);
+  const [serverError, setServerError] = useState("");
+  const [checkoutUrl, setCheckoutUrl] = useState("");
+  const [iframeLoaded, setIframeLoaded] = useState(false);
+  const [iframeFailed, setIframeFailed] = useState(false);
   usePageTitle("Payment");
 
-  const submitOrder = (event) => {
+  const currentStep = checkoutUrl ? 3 : 2;
+
+  const updateDraft = (name, value) => {
+    const nextDraft = { ...formData, [name]: value, country: "Egypt" };
+    setFormData(nextDraft);
+    saveDraft(nextDraft);
+  };
+
+  const submitOrder = async (event) => {
     event.preventDefault();
+    if (submitting) return;
+
     const data = Object.fromEntries(new FormData(event.currentTarget));
+    const phone = (data.phone || "").trim().replace(/[\s-]/g, "");
     const nextErrors = {};
 
     if (!data.firstName?.trim())
@@ -147,224 +166,143 @@ export default function Payment() {
       nextErrors.lastName = "Please enter your last name.";
     if (!/^\S+@\S+\.\S+$/.test(data.email || ""))
       nextErrors.email = "Please enter a valid email address.";
-    if (!phonePattern.test((data.phone || "").trim()))
+    if (!phonePattern.test(phone))
       nextErrors.phone = "Please enter a valid phone number.";
+    if (!governorates.includes(data.governorate))
+      nextErrors.governorate = "Please select a valid governorate.";
+    if (!data.city?.trim()) nextErrors.city = "Please enter your city.";
     if (!data.address?.trim())
       nextErrors.address = "Please enter your street address.";
-    if (!data.city?.trim()) nextErrors.city = "Please enter your city.";
-    if (!data.country) nextErrors.country = "Please choose a country.";
 
     setErrors(nextErrors);
+    setServerError("");
     if (Object.keys(nextErrors).length > 0) {
       const first = Object.keys(nextErrors)[0];
-      document.getElementById(`payment-${first}`)?.focus();
+      document.getElementById("payment-" + first)?.focus();
       return;
     }
 
-    setOrder({
-      number: `PLM-${Math.floor(100000 + Math.random() * 900000)}`,
-      firstName: data.firstName.trim(),
-      lastName: data.lastName.trim(),
-      email: data.email.trim(),
-      phone: data.phone.trim(),
-      address: data.address.trim(),
-      city: data.city.trim(),
-      country: data.country,
-      method,
-      items: cart.map((item) => ({ ...item })),
-      count: cartCount,
-      total: cartTotal,
-    });
-    clearCart();
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    const nextDraft = {
+      firstName: data.firstName,
+      lastName: data.lastName,
+      email: data.email,
+      phone: data.phone,
+      address: data.address,
+      governorate: data.governorate,
+      city: data.city,
+      country: "Egypt",
+    };
+    setFormData(nextDraft);
+    saveDraft(nextDraft);
+    setSubmitting(true);
+
+    try {
+      const response = await fetch("/api/create-payment", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          items: cart.map((item) => ({ id: item.id, qty: item.qty })),
+          customer: {
+            firstName: data.firstName.trim(),
+            lastName: data.lastName.trim(),
+            email: data.email.trim(),
+            phone,
+          },
+          paymentMethod: "card",
+        }),
+      });
+
+      const result = await response.json().catch(() => ({}));
+
+      if (!response.ok || !result.url) {
+        const providerStatus = Number(result.providerStatus);
+        let errorMessage =
+          "We could not start the payment. Please try again.";
+
+        if (result.code === "server_not_configured") {
+          errorMessage =
+            "Payment setup is incomplete on the server. Check the Paymob environment settings.";
+        } else if (result.code === "provider_error") {
+          errorMessage = `Paymob rejected the checkout${Number.isInteger(providerStatus) ? ` (HTTP ${providerStatus})` : ""}. Check that the card integration and Paymob keys belong to the same account and mode.`;
+        } else if (result.code === "provider_unavailable") {
+          errorMessage = "Could not reach Paymob. Check the connection and try again.";
+        }
+
+        setServerError(errorMessage);
+        setSubmitting(false);
+        return;
+      }
+
+      try {
+        sessionStorage.setItem(
+          SHIPPING_KEY,
+          JSON.stringify({
+            reference: result.reference,
+            firstName: data.firstName.trim(),
+            lastName: data.lastName.trim(),
+            email: data.email.trim(),
+            phone,
+            address: data.address.trim(),
+            governorate: data.governorate,
+            city: data.city.trim(),
+            country: "Egypt",
+          })
+        );
+      } catch {
+        void 0;
+      }
+
+      setIframeFailed(false);
+      setIframeLoaded(false);
+      setCheckoutUrl(result.url);
+      setSubmitting(false);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    } catch {
+      setServerError(
+        "Network problem. Please check your connection and try again."
+      );
+      setSubmitting(false);
+    }
   };
 
-  const renderField = (field) => (
-    <label
-      key={field.name}
-      htmlFor={`payment-${field.name}`}
-      className={`block text-xs text-ink/80 ${field.wide ? "sm:col-span-2" : ""}`}
-    >
-      {field.label}
-      {field.name === "country" ? (
-        <select
-          id="payment-country"
-          name="country"
-          autoComplete={field.autoComplete}
-          defaultValue=""
-          aria-invalid={Boolean(errors.country)}
-          aria-describedby={
-            errors.country ? "payment-country-error" : undefined
-          }
-          className={inputClass}
-        >
-          <option value="" disabled>
-            Select a country
-          </option>
-          {countries.map((c) => (
-            <option key={c} value={c}>
-              {c}
-            </option>
-          ))}
-        </select>
-      ) : (
+  const renderField = (field) => {
+    const fieldId = "payment-" + field.name;
+    const errorId = fieldId + "-error";
+    return (
+      <label
+        key={field.name}
+        htmlFor={fieldId}
+        className={
+          "block text-xs text-ink/80 " + (field.wide ? "sm:col-span-2" : "")
+        }
+      >
+        {field.label}
         <input
-          id={`payment-${field.name}`}
+          id={fieldId}
           name={field.name}
           type={field.type || "text"}
           autoComplete={field.autoComplete}
+          value={formData[field.name]}
+          onChange={(event) => updateDraft(field.name, event.target.value)}
           aria-invalid={Boolean(errors[field.name])}
-          aria-describedby={
-            errors[field.name] ? `payment-${field.name}-error` : undefined
+          aria-describedby={errors[field.name] ? errorId : undefined}
+          className={
+            inputClass + (errors[field.name] ? " border-burgundy" : "")
           }
-          className={`${inputClass} ${
-            errors[field.name] ? "border-burgundy" : ""
-          }`}
         />
-      )}
-      {errors[field.name] && (
-        <span
-          id={`payment-${field.name}-error`}
-          role="alert"
-          className="mt-1 flex items-center gap-1 text-xs text-burgundy"
-        >
-          <Icon icon="lucide:alert-circle" className="h-3.5 w-3.5" />
-          {errors[field.name]}
-        </span>
-      )}
-    </label>
-  );
-
-  if (order) {
-    const chosen = methods[order.method];
-    return (
-      <section className="mx-auto max-w-3xl px-6 py-12 md:py-20">
-        <Steps current={3} />
-
-        <div className="mt-10 flex items-center gap-4">
-          <span className="flex h-14 w-14 items-center justify-center rounded-full bg-burgundy text-cream">
-            <Icon icon="lucide:check" className="h-7 w-7" />
+        {errors[field.name] && (
+          <span
+            id={errorId}
+            role="alert"
+            className="mt-1 flex items-center gap-1 text-xs text-burgundy"
+          >
+            <Icon icon="lucide:alert-circle" className="h-3.5 w-3.5" />
+            {errors[field.name]}
           </span>
-          <div>
-            <p className="text-[11px] uppercase tracking-[0.3em] text-gold-deep">
-              Order {order.number}
-            </p>
-            <p className="mt-1 text-sm text-muted">Demo order confirmed</p>
-          </div>
-        </div>
-
-        <h1 className="mt-6 font-serif text-4xl md:text-5xl">
-          Thank you, <em className="text-burgundy">{order.firstName}</em>
-        </h1>
-        <p className="mt-4 text-sm leading-relaxed text-muted">
-          A confirmation would be sent to {order.email}. This is a demo order,
-          so no payment was taken and no details were sent anywhere.
-        </p>
-
-        <div className="mt-8 grid gap-4 sm:grid-cols-3">
-          <div className="border border-line bg-white/50 p-4">
-            <p className="flex items-center gap-2 text-[10px] uppercase tracking-[0.2em] text-gold-deep">
-              <Icon icon="lucide:map-pin" className="h-3.5 w-3.5" />
-              Shipping to
-            </p>
-            <p className="mt-3 text-sm leading-relaxed text-ink/80">
-              {order.firstName} {order.lastName}
-              <br />
-              {order.address}
-              <br />
-              {order.city}, {order.country}
-            </p>
-          </div>
-          <div className="border border-line bg-white/50 p-4">
-            <p className="flex items-center gap-2 text-[10px] uppercase tracking-[0.2em] text-gold-deep">
-              <Icon icon="lucide:mail" className="h-3.5 w-3.5" />
-              Contact
-            </p>
-            <p className="mt-3 break-words text-sm leading-relaxed text-ink/80">
-              {order.email}
-              <br />
-              {order.phone}
-            </p>
-          </div>
-          <div className="border border-line bg-white/50 p-4">
-            <p className="flex items-center gap-2 text-[10px] uppercase tracking-[0.2em] text-gold-deep">
-              <Icon icon={chosen.icon} className="h-3.5 w-3.5" />
-              Payment
-            </p>
-            <p className="mt-3 text-sm leading-relaxed text-ink/80">
-              {chosen.label}
-              <br />
-              Demo, not charged
-            </p>
-          </div>
-        </div>
-
-        <h2 className="mt-10 font-serif text-2xl">Your books</h2>
-        <ul className="mt-4 divide-y divide-line border-y border-line">
-          {order.items.map((item) => (
-            <li key={item.id} className="flex gap-4 py-4">
-              <BookCover
-                src={item.cover}
-                alt={`Cover of ${item.title}`}
-                title={item.title}
-                className="h-20 w-14 shrink-0 border border-gold/40 object-cover"
-              />
-              <div className="min-w-0 flex-1">
-                <p className="line-clamp-2 font-serif text-base text-burgundy">
-                  {item.title}
-                </p>
-                <p className="mt-1 text-xs text-muted">
-                  {item.authors.length === 0
-                    ? "Unknown author"
-                    : item.authors.join(", ")}
-                </p>
-                <p className="mt-1 text-xs text-muted">Qty {item.qty}</p>
-              </div>
-              <p className="shrink-0 font-['Inter',sans-serif] text-sm font-light text-burgundy">
-                {formatPrice(item.price * item.qty)}
-              </p>
-            </li>
-          ))}
-        </ul>
-
-        <dl className="mt-5 space-y-2 text-sm">
-          <div className="flex justify-between text-muted">
-            <dt>Shipping and taxes</dt>
-            <dd>Not calculated</dd>
-          </div>
-          <div className="flex items-baseline justify-between border-t border-line pt-3">
-            <dt>Total ({order.count} items)</dt>
-            <dd className="font-['Inter',sans-serif] text-2xl font-light text-burgundy">
-              {formatPrice(order.total)}
-            </dd>
-          </div>
-        </dl>
-
-        <div className="mt-10 flex flex-wrap gap-3">
-          <Link
-            to="/discover"
-            className="inline-flex bg-burgundy px-7 py-3.5 text-xs uppercase tracking-[0.2em] text-cream transition hover:bg-burgundy/90"
-          >
-            Continue shopping
-          </Link>
-          <Link
-            to="/"
-            className="inline-flex border border-line px-7 py-3.5 text-xs uppercase tracking-[0.2em] transition hover:border-burgundy hover:text-burgundy"
-          >
-            Back to home
-          </Link>
-          <button
-            type="button"
-            onClick={() => window.print()}
-            className="inline-flex cursor-pointer items-center gap-2 px-4 py-3.5 text-xs uppercase tracking-[0.2em] text-muted transition hover:text-burgundy"
-          >
-            <Icon icon="lucide:printer" className="h-4 w-4" />
-            Print receipt
-          </button>
-        </div>
-      </section>
+        )}
+      </label>
     );
-  }
+  };
 
   if (cart.length === 0) {
     return (
@@ -397,7 +335,7 @@ export default function Payment() {
           <Icon icon="lucide:arrow-left" className="h-4 w-4" />
           Back to bag
         </Link>
-        <Steps current={2} />
+        <CheckoutSteps current={currentStep} />
       </div>
 
       <div className="mt-10 grid gap-10 lg:grid-cols-[minmax(0,1fr)_380px] lg:gap-14">
@@ -414,12 +352,83 @@ export default function Payment() {
               className="mt-0.5 h-4 w-4 shrink-0 text-gold-deep"
             />
             <p>
-              This is a portfolio demo. Nothing on this page is sent anywhere,
-              and no payment is taken.
+              Payments are processed securely by Paymob. Your payment details
+              are entered on Paymob&apos;s secure form and never reach this website.
             </p>
           </div>
 
-          <form onSubmit={submitOrder} noValidate className="mt-10 space-y-10">
+          {checkoutUrl && (
+            <div className="mt-10">
+              <button
+                type="button"
+                onClick={() => {
+                  setCheckoutUrl("");
+                  setIframeLoaded(false);
+                }}
+                className="mb-4 inline-flex cursor-pointer items-center gap-2 text-xs uppercase tracking-[0.2em] text-muted transition hover:text-burgundy"
+              >
+                <Icon icon="lucide:arrow-left" className="h-4 w-4" />
+                Back to details
+              </button>
+              <div className="overflow-hidden border border-burgundy/20 bg-white shadow-sm">
+                <div className="flex flex-wrap items-center justify-between gap-4 border-b border-line bg-secondary/50 px-5 py-4 sm:px-6">
+                  <div>
+                    <p className="text-[10px] uppercase tracking-[0.24em] text-gold-deep">
+                      Secure checkout
+                    </p>
+                    <h2 className="mt-1 font-serif text-xl text-burgundy">
+                      Pay with card
+                    </h2>
+                  </div>
+                  <span className="inline-flex items-center gap-2 text-xs text-muted">
+                    <Icon icon="lucide:lock-keyhole" className="h-4 w-4 text-burgundy" />
+                    Protected by Paymob
+                  </span>
+                </div>
+                <div className="bg-white p-2 sm:p-4">
+                  {!iframeLoaded && !iframeFailed && (
+                    <p role="status" className="mb-3 text-sm text-muted">
+                      Loading the secure Paymob card form...
+                    </p>
+                  )}
+                  <iframe
+                    src={checkoutUrl}
+                    title="Secure payment by Paymob"
+                    allow="payment"
+                    onLoad={() => setIframeLoaded(true)}
+                    onError={() => setIframeFailed(true)}
+                    className="h-[760px] w-full border-0 bg-white"
+                  />
+                </div>
+              </div>
+              <p className="mt-3 flex items-start gap-2 text-xs leading-relaxed text-muted">
+                <Icon icon="lucide:shield-check" className="mt-0.5 h-4 w-4 shrink-0 text-gold-deep" />
+                Your bank may open a separate secure verification step before returning you here.
+              </p>
+              {iframeFailed && (
+                <p role="alert" className="mt-3 text-sm text-burgundy">
+                  The secure payment form did not load. Use the redirect link to
+                  continue with Paymob.
+                </p>
+              )}
+              {iframeFailed && (
+                <div className="mt-4">
+                  <a
+                    href={checkoutUrl}
+                    className="text-xs text-burgundy underline underline-offset-4"
+                  >
+                    Open Paymob checkout in this window
+                  </a>
+                </div>
+              )}
+            </div>
+          )}
+
+          <form
+            onSubmit={submitOrder}
+            noValidate
+            className={"mt-10 space-y-10 " + (checkoutUrl ? "hidden" : "")}
+          >
             <fieldset>
               <legend className="w-full">
                 <SectionTitle number="1" title="Contact" />
@@ -434,6 +443,48 @@ export default function Payment() {
                 <SectionTitle number="2" title="Shipping address" />
               </legend>
               <div className="mt-5 grid gap-5 sm:grid-cols-2">
+                <label
+                  htmlFor="payment-governorate"
+                  className="block text-xs text-ink/80"
+                >
+                  Governorate
+                  <select
+                    id="payment-governorate"
+                    name="governorate"
+                    autoComplete="address-level1"
+                    value={formData.governorate}
+                    onChange={(event) =>
+                      updateDraft("governorate", event.target.value)
+                    }
+                    aria-invalid={Boolean(errors.governorate)}
+                    aria-describedby={
+                      errors.governorate
+                        ? "payment-governorate-error"
+                        : undefined
+                    }
+                    className={
+                      inputClass +
+                      (errors.governorate ? " border-burgundy" : "")
+                    }
+                  >
+                    <option value="">Select your governorate</option>
+                    {governorates.map((governorate) => (
+                      <option key={governorate} value={governorate}>
+                        {governorate}
+                      </option>
+                    ))}
+                  </select>
+                  {errors.governorate && (
+                    <span
+                      id="payment-governorate-error"
+                      role="alert"
+                      className="mt-1 flex items-center gap-1 text-xs text-burgundy"
+                    >
+                      <Icon icon="lucide:alert-circle" className="h-3.5 w-3.5" />
+                      {errors.governorate}
+                    </span>
+                  )}
+                </label>
                 {addressFields.map(renderField)}
               </div>
             </fieldset>
@@ -442,65 +493,54 @@ export default function Payment() {
               <legend className="w-full">
                 <SectionTitle number="3" title="Payment method" />
               </legend>
-              <p className="mt-2 text-sm text-muted">
-                No card or wallet details are collected in this demo.
-              </p>
-              <div className="mt-5 grid gap-3 sm:grid-cols-2">
-                {Object.entries(methods).map(([key, item]) => (
-                  <label
-                    key={key}
-                    className={`relative flex cursor-pointer items-start gap-3 border p-4 transition ${
-                      method === key
-                        ? "border-burgundy bg-white/70 shadow-sm"
-                        : "border-line hover:border-burgundy/50"
-                    }`}
-                  >
-                    <input
-                      type="radio"
-                      name="paymentMethod"
-                      value={key}
-                      checked={method === key}
-                      onChange={() => setMethod(key)}
-                      className="mt-1 accent-burgundy"
-                    />
-                    <span>
-                      <span className="flex items-center gap-2 font-medium">
-                        <Icon
-                          icon={item.icon}
-                          className="h-4 w-4 text-burgundy"
-                        />
-                        {item.label}
-                      </span>
-                      <span className="mt-1 block text-xs text-muted">
-                        {item.hint}
-                      </span>
-                    </span>
-                    {method === key && (
-                      <Icon
-                        icon="lucide:check-circle"
-                        className="absolute right-3 top-3 h-4 w-4 text-burgundy"
-                      />
-                    )}
-                  </label>
-                ))}
+              <div className="mt-5 flex items-start gap-3 border border-burgundy bg-white/70 p-4">
+                <Icon
+                  icon="lucide:credit-card"
+                  className="mt-0.5 h-4 w-4 shrink-0 text-burgundy"
+                />
+                <div>
+                  <p className="font-medium">Bank card</p>
+                  <p className="mt-1 text-xs text-muted">
+                    Pay securely with Visa, Mastercard, and other supported cards.
+                  </p>
+                </div>
               </div>
             </fieldset>
 
             <div>
+              {serverError && (
+                <p
+                  role="alert"
+                  className="mb-4 flex items-start gap-2 border border-burgundy bg-white/70 p-3 text-sm text-burgundy"
+                >
+                  <Icon
+                    icon="lucide:alert-circle"
+                    className="mt-0.5 h-4 w-4 shrink-0"
+                  />
+                  {serverError}
+                </p>
+              )}
               <button
                 type="submit"
-                className="flex min-h-12 w-full cursor-pointer items-center justify-center gap-3 bg-burgundy px-6 py-3.5 text-xs uppercase tracking-[0.2em] text-cream transition hover:bg-burgundy/90"
+                disabled={submitting}
+                className="flex min-h-12 w-full cursor-pointer items-center justify-center gap-3 bg-burgundy px-6 py-3.5 text-xs uppercase tracking-[0.2em] text-cream transition hover:bg-burgundy/90 disabled:cursor-not-allowed disabled:opacity-60"
               >
-                Place demo order
-                <span aria-hidden="true">·</span>
-                <span className="font-['Inter',sans-serif]">
-                  {formatPrice(cartTotal)}
-                </span>
-                <Icon icon="lucide:arrow-right" className="h-4 w-4" />
+                {submitting ? (
+                  "Opening secure card payment..."
+                ) : (
+                  <>
+                    Pay with bank card
+                    <span aria-hidden="true">·</span>
+                    <span className="font-['Inter',sans-serif]">
+                      {formatPrice(cartTotal)}
+                    </span>
+                    <Icon icon="lucide:arrow-right" className="h-4 w-4" />
+                  </>
+                )}
               </button>
               <p className="mt-3 flex items-center justify-center gap-2 text-xs text-muted">
                 <Icon icon="lucide:lock-keyhole" className="h-3.5 w-3.5" />
-                Checkout preview by PLUME. No real payment.
+                Secure payment by Paymob.
               </p>
             </div>
           </form>
@@ -513,7 +553,7 @@ export default function Payment() {
               <li key={item.id} className="flex gap-3 py-4">
                 <BookCover
                   src={item.cover}
-                  alt={`Cover of ${item.title}`}
+                  alt={"Cover of " + item.title}
                   title={item.title}
                   className="h-16 w-11 shrink-0 border border-gold/40 object-cover"
                 />
