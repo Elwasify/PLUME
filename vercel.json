@@ -1,7 +1,7 @@
 {
   "rewrites": [
     {
-      "source": "/(.*)",
+      "source": "/:path((?!api/|@vite/|@react-refresh|.*\\..*).*)",
       "destination": "/index.html"
     }
   ]
