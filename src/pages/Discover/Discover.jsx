@@ -169,12 +169,8 @@ export default function Discover() {
   );
 
   const localBooks = localResult.hits;
-  const needsExtra = useLocal && !category && localBooks.length < EXTRA_MIN;
-
-  const facetList = useMemo(
-    () => Object.entries(localResult.facets).sort((a, b) => b[1] - a[1]),
-    [localResult],
-  );
+  const needsExtra = useLocal && localBooks.length < EXTRA_MIN;
+  const extraKey = JSON.stringify([q, category]);
 
   const suggestion = useMemo(
     () =>
@@ -329,7 +325,7 @@ export default function Discover() {
     searchBooksPage(
       {
         q,
-        category: "",
+        category,
         orderBy: "relevance",
         offset: 0,
         limit: LIMIT,
@@ -338,26 +334,48 @@ export default function Discover() {
     )
       .then((result) => {
         if (ctrl.signal.aborted) return;
-        setExtra({ key: q, books: result.books });
+        setExtra({
+          key: extraKey,
+          books: result.books.map((book) => ({
+            ...book,
+            category: category || book.category,
+          })),
+        });
       })
       .catch((err) => {
         if (err.name === "AbortError") return;
-        setExtra({ key: q, books: [] });
+        setExtra({ key: extraKey, books: [] });
       });
 
     return () => ctrl.abort();
-  }, [needsExtra, q]);
+  }, [needsExtra, q, category, extraKey]);
 
-  const extraLoading = needsExtra && extra.key !== q;
+  const extraLoading = needsExtra && extra.key !== extraKey;
   const extraBooks = useMemo(
-    () => (needsExtra && extra.key === q ? extra.books : []),
-    [needsExtra, extra, q],
+    () => (needsExtra && extra.key === extraKey ? extra.books : []),
+    [needsExtra, extra, extraKey],
   );
 
   const mergedBooks = useMemo(
     () => mergeBooks(localBooks, extraBooks),
     [localBooks, extraBooks],
   );
+  const extraFacetCounts = useMemo(() => {
+    const localKeys = new Set(localBooks.map(bookKey));
+    return extraBooks.reduce((counts, book) => {
+      const key = bookKey(book);
+      if (localKeys.has(key) || !book.category) return counts;
+      counts[book.category] = (counts[book.category] || 0) + 1;
+      return counts;
+    }, {});
+  }, [localBooks, extraBooks]);
+  const facetList = useMemo(() => {
+    const facets = { ...localResult.facets };
+    for (const [name, count] of Object.entries(extraFacetCounts)) {
+      facets[name] = (facets[name] || 0) + count;
+    }
+    return Object.entries(facets).sort((a, b) => b[1] - a[1]);
+  }, [localResult, extraFacetCounts]);
 
   const loading = searching ? !ready && !catalogError : data.key !== fullKey;
   const sortedLocal = useMemo(

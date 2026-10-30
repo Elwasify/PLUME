@@ -104,7 +104,7 @@ export default function SearchBox({
   );
 
   const q = debounced.trim();
-  const needsRemote = ready && q.length >= 3 && results.length < 3;
+  const needsRemote = ready && q.length >= 3 && results.length < 6;
 
   useEffect(() => {
     if (!needsRemote) return;

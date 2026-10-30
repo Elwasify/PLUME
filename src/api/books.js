@@ -1,5 +1,5 @@
-import { requestJson } from "./request";
-import { isLatinText, latinNames } from "../utils/text";
+import { requestJson } from "./request.js";
+import { isLatinText, latinNames } from "../utils/text.js";
 
 const BASE = "https://openlibrary.org";
 const LIST_FIELDS =
@@ -10,6 +10,26 @@ const coverUrl = (id, size = "M") =>
   id
     ? `https://covers.openlibrary.org/b/id/${encodeURIComponent(id)}-${size}.jpg?default=false`
     : undefined;
+
+const CATEGORY_RULES = [
+  ["Science fiction", /\bscience fiction\b|\bsci[- ]fi\b/],
+  ["Mystery", /\bmystery\b|\bdetective\b|\bcrime\b/],
+  ["Fantasy", /\bfantasy\b/],
+  ["Romance", /\bromance\b/],
+  ["Biography", /\bbiograph(?:y|ies)\b|\bautobiograph(?:y|ies)\b|\bmemoirs?\b/],
+  ["History", /\bhistory\b|\bhistorical\b/],
+  ["Classics", /\bclassics?\b/],
+  ["Philosophy", /\bphilosoph(?:y|ical)\b/],
+  ["Business", /\bbusiness\b|\beconomics\b|\bmanagement\b/],
+  ["Technology", /\btechnolog(?:y|ies)\b|\bcomputers?\b|\binternet\b|\bengineering\b/],
+  ["Science", /\bscience\b/],
+  ["Fiction", /\bfiction\b|\bnovels?\b/],
+];
+
+function classifySubjects(subjects) {
+  const text = subjects.join(" ").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+  return CATEGORY_RULES.find(([, pattern]) => pattern.test(text))?.[0] || "";
+}
 
 const isbnCoverUrl = (isbn, size = "M") =>
   isbn
@@ -52,6 +72,7 @@ function toBook(doc) {
         : undefined,
       imageLinks: cover ? { thumbnail: cover } : undefined,
     },
+    category: classifySubjects(subjects),
   };
 }
 

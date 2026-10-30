@@ -113,13 +113,9 @@ export default function About() {
         <blockquote className="mt-6 font-serif text-3xl italic leading-snug md:text-4xl">
           Every Story Begins with a Word.
         </blockquote>
-        <p className="mt-6 text-sm text-muted">
-          PLUME is a portfolio project. There is no physical store and no real
-          orders are processed.
-        </p>
         <Link
           to="/discover"
-          className="mt-10 inline-flex items-center justify-center bg-burgundy px-7 py-3.5 text-xs uppercase tracking-[0.2em] text-cream transition hover:bg-burgundy/90"
+          className="mt-8 inline-flex items-center justify-center bg-burgundy px-7 py-3.5 text-xs uppercase tracking-[0.2em] text-cream transition hover:bg-burgundy/90"
         >
           Begin discovering
         </Link>
